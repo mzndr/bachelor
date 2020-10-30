@@ -1,0 +1,28 @@
+FROM ubuntu:latest
+
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -yqq \
+    ufw \
+    net-tools \
+    iptables \
+    openvpn \
+    easy-rsa 
+
+WORKDIR /etc/openvpn
+COPY ./data .
+RUN chmod a+x -R . 
+
+COPY ./firewall/before.rules /etc/ufw/
+COPY ./firewall/ufw /etc/default/
+
+
+RUN \
+echo net.ipv4.ip_forward=1 >> /etc/sysctl.conf & \
+sysctl -p
+
+
+
+
+EXPOSE 1194/udp
+CMD ufw enable & ufw allow 1194/udp & ufw reload & /etc/init.d/openvpn start & tail -f /dev/null
