@@ -1,0 +1,12 @@
+from flask import Blueprint
+from flask_security import current_user, login_required
+
+index_bp = Blueprint(
+  name="index",
+  import_name=__name__
+  )
+
+@index_bp.route('/', methods=['GET'])
+@login_required
+def index():
+  return "Hello " + current_user.username

@@ -3,8 +3,12 @@
 import os
 
 from flask import Flask
+from flask_security import Security, SQLAlchemyUserDatastore
 
 from flask_app.core.db import db
+
+from .core.models.docker import Container, Network
+from .core.models.user import Role, User
 
 
 def create_app(test_config=None):
@@ -31,6 +35,28 @@ def create_app(test_config=None):
 
     # init database
     db.init_app(app)
+    with app.app_context():
+        db.create_all()
+    
+
+    # init flask-security
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+    security = Security(app, user_datastore)
+
+    with app.app_context():
+        from flask_security.utils import hash_password
+
+        try:
+            test_user = User(
+                username=app.config['USERNAME'],
+                password=hash_password(app.config['PASSWORD']),
+                email='test@test.local',
+                active=True
+                )
+            db.session.add(test_user)
+            db.session.commit()
+        except:
+            pass
 
     # register blueprints
     register_blueprints(app)
@@ -40,9 +66,11 @@ def create_app(test_config=None):
 def register_blueprints(app):
     from flask_app.routes.api.api import api_bp
     from flask_app.routes.api.auth import auth_bp
+    from flask_app.routes.views.index import index_bp
     blueprints = [
         api_bp,
-        auth_bp
+        auth_bp,
+        index_bp
     ]
 
 
