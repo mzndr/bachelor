@@ -17,7 +17,24 @@ class User(db.Model, UserMixin):
   roles = db.relationship('Role', secondary=roles_users,
                           backref=db.backref('users', lazy='dynamic'))
 
+  def get_json(self):
+    json = {
+      "username":self.username,
+      "email":self.email,
+      "roles": [],
+    }
+    for role in self.roles:
+      json["roles"].append(role.get_json())
+    return json
+
 class Role(db.Model, RoleMixin):
   id = db.Column(db.Integer(), primary_key=True)
   name = db.Column(db.String(80), unique=True)
   description = db.Column(db.String(255))
+  
+  def get_json(self):
+    json = {
+      "name":self.name,
+      "description":self.description,
+    }
+    return json

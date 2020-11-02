@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from flask_security import login_required
 
-from ...core.models.docker import Network
+from ...core.models.docker import Container, Network
 
 api_bp = Blueprint(
   name="api",
@@ -9,15 +9,12 @@ api_bp = Blueprint(
   url_prefix='/api'
   )
 
-@api_bp.route('/test', methods=['GET'])
+@api_bp.route('/containers/available', methods=['GET'])
 @login_required
-def test():
-  network = Network.create_network(
-    network_name="testnetwork1337",
-    container_folder_names=["apache","apache"],
-    assign_users=None
-  )
-  return "network created"
+def get_available_container_files():
+  files = Container.get_available_container_files()
+  return jsonify(files)
+
 
 @api_bp.route('/networks/<string:name>', methods=['GET'])
 @login_required
@@ -26,12 +23,11 @@ def get_network_by_name(name):
   return network.get_json()
 
 @api_bp.route('/networks/<string:name>/delete', methods=['DELETE'])
-@login_required
+#@login_required
 def delete_network(name):
   network = Network.get_network_by_name(name)
   network.delete()
   return network.get_json()
-
 
 @api_bp.route('/networks/', methods=['GET'])
 @login_required

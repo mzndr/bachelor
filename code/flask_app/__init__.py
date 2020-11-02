@@ -11,6 +11,11 @@ from .core.models.docker import Container, Network
 from .core.models.user import Role, User
 
 
+def cleanup(app):
+    with app.app_context():
+        Network.cleanup()
+        Container.cleanup()
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -38,6 +43,8 @@ def create_app(test_config=None):
     with app.app_context():
         db.create_all()
     
+    # cleanup any leftover containers, networks or files before starting
+    cleanup(app)
 
     # init flask-security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)

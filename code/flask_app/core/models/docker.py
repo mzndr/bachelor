@@ -26,9 +26,17 @@ class Container(db.Model):
 
 
   def stop(self):
-    container = self.get_container_object()
-    container.stop()
-    self.delete()
+    try:
+      container = self.get_container_object()
+      container.stop()
+    except:
+      pass
+    try:
+      shutil.rmtree(self.files_location)
+    except:
+      pass
+
+    db.session.delete(self)
     db.session.flush()
 
   def get_json(self):
@@ -112,6 +120,28 @@ class Container(db.Model):
 
     return vpn_container
 
+  @staticmethod
+  def get_available_container_files():
+    ret = []
+    generator = os.walk(current_app.config["CONTAINER_DIR"]) # get all folders in containers folder
+    root, dirs, files = list(generator)[0]
+    
+    # check if folders include dockerfile
+    for d in dirs:
+      path = os.path.join(root,d)
+      _generator = os.walk(path)
+      _root, _dirs, _files = list(_generator)[0]
+      if "dockerfile" in _files:
+        ret.append(d)
+
+    return ret
+
+  @staticmethod
+  def cleanup():
+    containers = Container.query.all()
+    for container in containers:
+      container.delete()
+
 class Network(db.Model):
   id = db.Column(db.Integer(), primary_key=True)
   vpn_port = db.Column(db.Integer(), unique=True)
@@ -127,8 +157,12 @@ class Network(db.Model):
       "id": self.id,
       "name": self.name,
       "vpn_port": self.vpn_port,
-      "containers": []
+      "assigned_users": [],
+      "containers": [],
     }
+
+    for user in self.assigned_users:
+      json["assigned_users"].append(user.get_json())
 
     for container in self.containers:
       json["containers"].append(container.get_json())
@@ -138,7 +172,11 @@ class Network(db.Model):
   def delete(self):
     for container in self.containers:
       container.stop()
-    docker_client.networks.get(self.name).remove()
+    try:
+      docker_client.networks.get(self.name).remove()
+    except:
+      pass
+    db.session.delete(self)
     db.session.commit()
 
   def get_vpn_port(self):
@@ -187,3 +225,9 @@ class Network(db.Model):
     db.session.commit()
 
     return network
+
+  @staticmethod
+  def cleanup():
+    networks = Network.query.all()
+    for network in networks:
+      network.delete()
