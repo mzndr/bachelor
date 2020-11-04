@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, render_template
 from flask_security import current_user, login_required
 
 index_bp = Blueprint(

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import atexit
 import os
 
 from flask import Flask
@@ -12,9 +13,11 @@ from .core.models.user import Role, User
 
 
 def cleanup(app):
-    with app.app_context():
-        Network.cleanup()
-        Container.cleanup()
+    if app.config["CLEANUP_BEFORE_AND_AFTER"]:
+        with app.app_context():
+            app.logger.info("Cleaning up containers and networks...")
+            Network.cleanup()
+            Container.cleanup()
 
 def create_app(test_config=None):
     # create and configure the app
@@ -43,7 +46,8 @@ def create_app(test_config=None):
     with app.app_context():
         db.create_all()
     
-    # cleanup any leftover containers, networks or files before starting
+    # cleanup any leftover containers, networks or files before starting or exiting
+    atexit.register(cleanup,app=app)
     cleanup(app)
 
     # init flask-security
@@ -60,8 +64,18 @@ def create_app(test_config=None):
                 email='test@test.local',
                 active=True
                 )
+            test_user
+            test_user2 = User(
+                username=app.config['USERNAME'] + "2",
+                password=hash_password(app.config['PASSWORD']),
+                email='test@test2.local',
+                active=True
+                )
             db.session.add(test_user)
+            db.session.add(test_user2)
             db.session.commit()
+            test_user.gen_vpn_files()
+            test_user2.gen_vpn_files()
         except:
             pass
 
@@ -71,15 +85,14 @@ def create_app(test_config=None):
     return app
 
 def register_blueprints(app):
-    from flask_app.routes.api.api import api_bp
-    from flask_app.routes.api.auth import auth_bp
+    from flask_app.routes.api.docker import docker_api_bp
+    from flask_app.routes.api.user import user_api_bp
     from flask_app.routes.views.index import index_bp
     blueprints = [
-        api_bp,
-        auth_bp,
+        docker_api_bp,
+        user_api_bp,
         index_bp
     ]
-
-
+    
     for blueprint in blueprints:
         app.register_blueprint(blueprint)

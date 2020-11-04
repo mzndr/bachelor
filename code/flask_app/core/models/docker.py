@@ -1,7 +1,9 @@
+import json
 import os
 import shutil
 import tempfile
 import uuid
+from distutils.dir_util import copy_tree
 
 import docker
 from flask import current_app
@@ -21,9 +23,13 @@ class Container(db.Model):
   name = db.Column(db.String(255), unique=True, nullable=False)
   files_location = db.Column(db.String(1024), unique=True, nullable=False)
   docker_id = db.Column(db.String(255), unique=True, nullable=False)
-  network_id = db.Column(db.Integer, db.ForeignKey('network.id'), nullable=False)
-
-
+  network_id = db.Column(db.Integer, db.ForeignKey('network.id'))
+  
+  def read_properties(self):
+    path = os.path.join(self.files_location,"properties.json")
+    with open(path) as json_file:
+      data = json.load(json_file)
+      return data
 
   def stop(self):
     try:
@@ -44,7 +50,8 @@ class Container(db.Model):
       "name":self.name,
       "docker_id": self.docker_id,
       "network_id": self.network_id,
-      "files_location": self.files_location
+      "files_location": self.files_location,
+      "properties": self.read_properties()
     }
     return json
 
@@ -54,53 +61,64 @@ class Container(db.Model):
     container_object.reload() # Also tell docker-daemon to fetch current information about the container. 
     return container_object
 
+  ### STATIC METHODS ###
+  @staticmethod 
+  def create_container_dir(folder_name):
+    data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
+    root_location = tempfile.mkdtemp(prefix=current_app.config["APP_PREFIX"] + "_" + folder_name + "_")
+    copy_tree(data_path, root_location)
+    return root_location
+
   @staticmethod
-  def create_container(
+  def create_detatched_container(
     folder_name,
     network,
-    container_name=None,
     privileged=False,
+    existing_location=None,
     command=None, 
     cap_add=None, 
     ports=None,
+    volumes=None,
     ):
     """Creates a container, adds it to the specified network and then runs it.
     """
     network_name = network.name
-    data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
-    location = tempfile.mkdtemp() # Create a new temp dir for the files of the container
+    network_id = network.id
 
-    new_datapath = os.path.join(location,folder_name) # Create a path for the new files to copy them to
-
-
-    shutil.copytree(data_path, new_datapath) # Copy the files into the new tmp dir
-    
+    data_path = None
+    if existing_location is None:
+      data_path = Container.create_container_dir(folder_name)
+    else:
+      data_path = existing_location
 
     image, logs = docker_client.images.build(
-      path=new_datapath,
+      path=data_path,
       nocache=True,
     )
 
     # generate random name with network name as prefix
-    default_container_name = network_name + "_" + secure_filename(folder_name) + \
-                            "_" + str(uuid.uuid4()).split('-')[0] 
+    container_name = f"{current_app.config['APP_PREFIX']}_{network_name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
+  
+
 
     container = docker_client.containers.run(
       image=image,
       remove=True,
       detach=True,
-      name= container_name or default_container_name,
-      network=network_name,
+      name=container_name,
+      network=network.name,
       privileged=privileged,
-      ports=ports           
+      ports=ports,
+      command=command,
+      volumes=volumes      
     )
 
     container.reload() # Let the docker daemon refetch container information
     container_db = Container(
       name=container.name,
-      files_location=location,
-      network_id = network.id,
-      docker_id=container.id
+      files_location=data_path,
+      network_id = network_id,
+      docker_id=container.id,
     )
     db.session.add(container_db)
     db.session.flush()
@@ -108,21 +126,39 @@ class Container(db.Model):
   
   @staticmethod
   def create_vpn_container(network):
+    """Creates the vpn container for the specified network"""
+    vpn_image = "vpn"
     network_name = network.name
+    network_id = network.id
+    data_path = Container.create_container_dir(vpn_image)
+    vpn_files = os.path.join(data_path,"data")
+    # Copy user authentication files into vpn
+    for user in network.assigned_users:
+      crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
+      key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
+      with open(crt_location,"w") as crt_file:
+        crt_file.write(user.vpn_crt)
+      with open(key_location,"w") as key_file:
+        key_file.write(user.vpn_key)
+
     
-    vpn_container = Container.create_container(
-      "vpn",
+    vpn_container = Container.create_detatched_container(
+      vpn_image,
       network,
+      existing_location=data_path,
       ports={"1194/udp":None},              
       cap_add="NET_ADMIN",
-      privileged=True
+      privileged=True,
       )
+
+
+
 
     return vpn_container
 
   @staticmethod
   def get_available_container_files():
-    ret = []
+    ret = {}
     generator = os.walk(current_app.config["CONTAINER_DIR"]) # get all folders in containers folder
     root, dirs, files = list(generator)[0]
     
@@ -132,15 +168,70 @@ class Container(db.Model):
       _generator = os.walk(path)
       _root, _dirs, _files = list(_generator)[0]
       if "dockerfile" in _files:
-        ret.append(d)
+          path = os.path.join(_root,"properties.json")
+          with open(path) as json_file:
+            data = json.load(json_file)
+            ret[d] = data
 
     return ret
+  
+
+  @staticmethod 
+  def gen_vpn_crt_and_cfg(user):
+    
+    folder_name="vpn_keygen"
+    crt_command= f"./create_client_files.sh {user.username}"
+    data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
+    location = Container.create_container_dir(folder_name)
+
+    vpn_data_path = os.path.join(location,"data")
+    image, logs = docker_client.images.build(
+      path=location,
+      nocache=True,
+    )
+
+    # generate random name
+    container_name = f"{current_app.config['APP_PREFIX']}_{secure_filename(folder_name)}-{user.username}_{str(uuid.uuid4()).split('-')[0]}"
+    output = docker_client.containers.run(
+      image=image,
+      remove=True,
+      detach=False,
+      name=container_name,
+      privileged=True,
+      ports=None,
+      cap_add="NET_ADMIN",
+      command=crt_command,
+      stdout=True,
+      stderr=True,
+      volumes={vpn_data_path:{"bind":"/etc/openvpn","mode":"rw"}}           
+    )
+
+    user_crt_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.crt")
+    user_crt = None
+    user_key_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.key")
+    user_key = None
+    user_cfg_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.ovpn")
+    user_cfg = None
+
+    with open(user_crt_path,"r") as f:
+      user_crt = f.read()
+    with open(user_key_path,"r") as f:
+      user_key = f.read()
+    with open(user_cfg_path,"r") as f:
+      user_cfg = f.read()
+      # Do some corrections, for some reason server outputs faulty cfg
+      user_cfg = user_cfg.replace("dev","dev tun").replace("remote ","") 
+
+    shutil.rmtree(location)
+
+    return user_crt, user_key, user_cfg
 
   @staticmethod
   def cleanup():
     containers = Container.query.all()
     for container in containers:
       container.delete()
+    docker_client.containers.prune()
 
 class Network(db.Model):
   id = db.Column(db.Integer(), primary_key=True)
@@ -179,17 +270,13 @@ class Network(db.Model):
     db.session.delete(self)
     db.session.commit()
 
-  def get_vpn_port(self):
-    vpn_container_object = self.get_container_object()
-    return vpn_container_object.ports['1194/udp'][0]['HostPort']
-
   def get_connection_command(self,user):
     ip = current_app.config["PUBLIC_IP"]
-    port = self.get_vpn_port()
+    port = self.vpn_port
     command = f"sudo openvpn --config ~/{user.username}.ovpn --remote {ip} {port} udp"
+    return command
 
   ### STATIC METHODS ###
-
   @staticmethod 
   def get_network_by_name(name):
     network = Network.query.filter_by(name=name).first()
@@ -219,7 +306,7 @@ class Network(db.Model):
     network_db.vpn_port = vpn_container_object.ports['1194/udp'][0]['HostPort']
 
     for container_folder in container_folder_names:
-      Container.create_container(container_folder,network_db)
+      Container.create_detatched_container(container_folder,network_db)
     
     
     db.session.commit()
@@ -231,3 +318,4 @@ class Network(db.Model):
     networks = Network.query.all()
     for network in networks:
       network.delete()
+    docker_client.networks.prune()
