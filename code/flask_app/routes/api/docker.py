@@ -46,7 +46,7 @@ def get_network_vpn_data(name):
   return jsonify(network.get_connection_command(current_user))
 
 @docker_api_bp.route('/networks/<string:name>/delete', methods=['DELETE'])
-@login_required
+
 def delete_network(name):
   network = Network.get_network_by_name(name)
   json = network.get_json()

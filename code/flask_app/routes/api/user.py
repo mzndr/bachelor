@@ -4,7 +4,7 @@ from flask import Blueprint, send_file
 from flask_security import current_user, login_required
 
 user_api_bp = Blueprint(
-  name="user",
+  name="users",
   import_name=__name__,
   url_prefix='/api/users/'
   )

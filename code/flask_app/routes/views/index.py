@@ -9,4 +9,7 @@ index_bp = Blueprint(
 @index_bp.route('/', methods=['GET'])
 @login_required
 def index():
-  return "Hello " + current_user.username
+  return render_template(
+    "index.jinja",
+    title="index"
+    )

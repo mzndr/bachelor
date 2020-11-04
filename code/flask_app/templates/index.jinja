@@ -1,0 +1,32 @@
+{% extends "_base.jinja" %}
+
+{% block content %}
+  <div class="container-fluid">
+
+    <div class="col">
+      <div class="row">
+        
+      </div>
+      <div class="row">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Command</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for network in current_user.assigned_networks %}
+            <tr>
+              <td>{{ network.name }}</td>
+              <td>{{ network.get_connection_command(current_user) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+  </div>
+{%endblock content %}
