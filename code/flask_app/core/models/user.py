@@ -71,4 +71,34 @@ class Role(db.Model, RoleMixin):
     return json
 
 class Group(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
   users = db.relationship("User")
+
+  def assign_users(self, users):
+    for user in users:
+      if user not in self.users:
+        self.users.append(user)
+    db.session.add(self)
+    db.session.commit()
+  
+  def deassign_users(self,users):
+    for user in self.users:
+      if user in users:
+        self.users.remove(user)
+
+    if len(self.users) <= 0:
+      self.delete()
+
+    db.session.add(self)
+    db.session.commit()
+
+  def delete(self):
+    db.session.remove(self)
+    db.session.commit()
+
+  @staticmethod
+  def create_group(assign_users):
+    group = Group()
+    group.assign_users(assign_users)
+    db.session.add(group)
+    db.session.commit()

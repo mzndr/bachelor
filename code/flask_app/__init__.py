@@ -11,7 +11,7 @@ from flask_jsglue import JSGlue
 
 from .core.models.docker import (Container, ContainerImage, Network,
                                  NetworkPreset)
-from .core.models.user import Role, User
+from .core.models.user import Group, Role, User
 
 
 def cleanup(app):
