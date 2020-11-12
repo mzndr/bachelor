@@ -7,8 +7,10 @@ from flask import Flask
 from flask_security import Security, SQLAlchemyUserDatastore
 
 from flask_app.core.db import db
+from flask_jsglue import JSGlue
 
-from .core.models.docker import Container, Network
+from .core.models.docker import (Container, ContainerImage, Network,
+                                 NetworkPreset)
 from .core.models.user import Role, User
 
 
@@ -36,6 +38,7 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
+
 
     # init database
     db.init_app(app)
@@ -77,6 +80,9 @@ def create_app(test_config=None):
 
     # register blueprints
     register_blueprints(app)
+    
+    # init jsglue
+    jsglue = JSGlue(app)
 
     return app
 
@@ -84,10 +90,12 @@ def register_blueprints(app):
     from flask_app.routes.api.docker import docker_api_bp
     from flask_app.routes.api.user import user_api_bp
     from flask_app.routes.views.index import index_bp
+    from flask_app.routes.views.networks import networks_bp
     blueprints = [
         docker_api_bp,
         user_api_bp,
-        index_bp
+        index_bp,
+        networks_bp
     ]
     
     for blueprint in blueprints:

@@ -1,0 +1,74 @@
+{% extends "_base.jinja" %}
+{% block content_header %}<h1>Browse Network Presets</h1>{% endblock content_header %}
+{% block content %}
+  <div class="container-fluid">
+
+    <div class="col">
+      <div class="row">
+        
+      </div>
+      <!-- /row -->
+      
+      <div class="row">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Containers</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for preset in presets %}
+            <tr id="{{preset.id}}">
+              <td>{{ preset.name }}</td>
+              <td>
+                {% for container_image in preset.container_images %}
+                  <span class="badge badge-secondary mr-1">{{container_image.name}}</span>
+                {% else %}
+                  None.
+                {% endfor %} 
+              </td>
+              <td>
+                <!-- Start network button -->
+                <button class="btn btn-success control-button float-left mr-1">
+                  <i class="fas fa-play"></i>
+                </button>
+
+                <!-- Delete preset button -->
+
+                {% call macros.create_modal_button(preset.id, class="btn btn-danger control-button float-left") %}
+                  <i class="fas fa-trash-alt"></i>
+                {% endcall %}
+                {% call macros.create_modal(preset.id, title="Confirmation required!") %}
+                  <div class="modal-body">
+                    <p>Do you really want to delete {{preset.name}}?</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="deleteNetworkPresetButton('{{preset.id}}')">Yes</button>
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
+                  </div>
+                {% endcall %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td>There are no presets yet</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- /row -->
+
+    </div>
+    <!-- /col -->
+  </div>
+  <!-- /container-fluid -->
+
+{% endblock content %}
+
+{% block javascripts%}
+{{super()}}
+<script src="{{ url_for('static',filename='js/networkPresetList.js')}}"></script>
+{% endblock %}

@@ -12,12 +12,13 @@ from werkzeug.utils import secure_filename
 
 from ..db import db
 
+### Helper Tables ###
 network_users = db.Table('network_users',
         db.Column('user_id',    db.Integer(), db.ForeignKey('user.id')),
         db.Column('network_id', db.Integer(), db.ForeignKey('network.id')))
 
 docker_client = docker.from_env()        
-
+### Container Management ###
 class Container(db.Model):
   id = db.Column(db.Integer(), primary_key=True, nullable=False)
   name = db.Column(db.String(255), unique=True, nullable=False)
@@ -156,26 +157,6 @@ class Container(db.Model):
 
     return vpn_container
 
-  @staticmethod
-  def get_available_container_files():
-    ret = {}
-    generator = os.walk(current_app.config["CONTAINER_DIR"]) # get all folders in containers folder
-    root, dirs, files = list(generator)[0]
-    
-    # check if folders include dockerfile
-    for d in dirs:
-      path = os.path.join(root,d)
-      _generator = os.walk(path)
-      _root, _dirs, _files = list(_generator)[0]
-      if "dockerfile" in _files:
-          path = os.path.join(_root,"properties.json")
-          with open(path) as json_file:
-            data = json.load(json_file)
-            ret[d] = data
-
-    return ret
-  
-
   @staticmethod 
   def gen_vpn_crt_and_cfg(user):
     
@@ -233,7 +214,132 @@ class Container(db.Model):
       container.delete()
     docker_client.containers.prune()
 
+class ContainerImage(db.Model):
+  """Model for holding a container image name"""
+  id = db.Column(db.Integer(), primary_key=True)  
+  name = db.Column(db.String(255)) 
+  network_preset_id = db.Column(
+    db.Integer, 
+    db.ForeignKey('network_preset.id'),
+    nullable=False
+  )
+
+  def get_json(self):
+    json = {
+      "name": self.name,
+      "properties": self.get_properties()
+    }
+    return json
+
+  def get_properties(self):
+    properties_path = os.path.join(
+      current_app.config["CONTAINER_DIR"],
+      self.name,
+      "properties.json"
+    )
+
+    with open(properties_path) as json_file:
+          data = json.load(json_file)
+    return data
+
+  def does_exist(self):
+    existing = {}
+    existing = Container_Image.get_available_container_images()
+    if self.name not in existing.keys():
+      return False
+    return True
+
+  @staticmethod
+  def get_available_container_images():
+    ret = {}
+    hidden_images = ["vpn","vpn_keygen"]
+    generator = os.walk(current_app.config["CONTAINER_DIR"]) # get all folders in containers folder
+    root, dirs, files = list(generator)[0]
+    
+    # check if folders include dockerfile
+    for d in dirs:
+      path = os.path.join(root,d)
+      _generator = os.walk(path)
+      _root, _dirs, _files = list(_generator)[0]
+      if "dockerfile" in _files and d not in hidden_images:
+          path = os.path.join(_root,"properties.json")
+          with open(path) as json_file:
+            data = json.load(json_file)
+            ret[d] = data
+
+    return ret
+  
+
+### Network Management ###
+class NetworkPreset(db.Model):
+  """Model for holding a network preset"""
+  id = db.Column(db.Integer(), primary_key=True)  
+  name = db.Column(db.String(255), unique=True)
+  container_images = db.relationship(
+    "ContainerImage",
+    cascade="delete, delete-orphan"
+    )
+
+  def get_json(self):
+    json = {
+      "name":self.name,
+      "container_images":[]
+    }
+    for container_image in self.container_images:
+      json["container_images"].append(container_image.get_json())
+    return json
+
+  def delete(self):
+    db.session.delete(self)
+    db.session.commit()
+
+  def create_network(self,assign_users,name=None):
+    """Creates a network from the preset"""
+    container_image_names = []
+    for image in self.container_images:
+      if not image.does_exist():
+        raise ValueError(f"Container image '{image_name}' does not exist on disk. If its there, check if there is a dockerfile in its root directory.")
+      container_image_names.append(image.name)
+
+    network = Network.create_network(
+      network_name= name or self.name,
+      container_image_names=container_image_names,
+      assign_users=assign_users
+    )
+    return network
+  
+  @staticmethod
+  def get_network_preset_by_name(name):
+    preset = NetworkPreset.query.filter_by(name=name).first()
+    return preset
+
+  @staticmethod
+  def get_network_preset_by_id(id):
+    preset = NetworkPreset.query.get(id)
+    return preset
+
+  
+  @staticmethod
+  def create_network_preset(name,container_image_names):
+    container_images = []
+    available_images = ContainerImage.get_available_container_images()
+    for image_name in container_image_names:
+      if image_name not in available_images:
+        raise ValueError(f"Container image '{image_name}' does not exist on disk. If its there, check if there is a dockerfile in its root directory.")
+      image = ContainerImage(name=image_name)
+      db.session.add(image)
+      container_images.append(image)
+    
+    preset = NetworkPreset(
+      name=name,
+      container_images=container_images
+    )
+    db.session.add(preset)
+    db.session.commit()
+    return preset
+
 class Network(db.Model):
+  """Model for a running network"""
   id = db.Column(db.Integer(), primary_key=True)
   vpn_port = db.Column(db.Integer(), unique=True)
   name = db.Column(db.String(255), unique=True)
@@ -283,11 +389,15 @@ class Network(db.Model):
     return network
 
   @staticmethod
+  def get_network_by_id(id):
+    return Network.query.get(id)
+
+  @staticmethod
   def get_all_networks():
     return Network.query.all()
 
   @staticmethod
-  def create_network(network_name,container_folder_names,assign_users = []):
+  def create_network(network_name,container_image_names,assign_users = []):
     network = docker_client.networks.create(
         name=network_name,
         check_duplicate=True,
@@ -305,7 +415,7 @@ class Network(db.Model):
     vpn_container_object = vpn_container.get_container_object()
     network_db.vpn_port = vpn_container_object.ports['1194/udp'][0]['HostPort']
 
-    for container_folder in container_folder_names:
+    for container_folder in container_image_names:
       Container.create_detatched_container(container_folder,network_db)
     
     

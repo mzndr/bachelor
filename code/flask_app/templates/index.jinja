@@ -1,5 +1,5 @@
 {% extends "_base.jinja" %}
-
+{% block content_header %}<h1>Dashboard</h1>{% endblock content_header %}
 {% block content %}
   <div class="container-fluid">
 
@@ -7,6 +7,8 @@
       <div class="row">
         
       </div>
+      <!-- /row -->
+
       <div class="row">
         <table class="table table-striped">
           <thead>
@@ -20,13 +22,20 @@
             <tr>
               <td>{{ network.name }}</td>
               <td>{{ network.get_connection_command(current_user) }}</td>
+              <td><button class="btn btn-danger control-button"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td>There are no running networks</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+      <!-- /row -->
+
     </div>
-
-
+    <!-- /col -->
   </div>
+  <!-- /container-fluid -->
 {%endblock content %}

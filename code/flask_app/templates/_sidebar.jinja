@@ -6,7 +6,7 @@
       <!-- Sidebar user panel (optional) -->
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="info">
-          <a href="#" class="d-inline">{{current_user.username}}</a>
+          <a href="#" class="ml-5">{{current_user.username}}</a>
           <a href="{{url_for('users.get_current_user_cfg')}}"class="btn btn-primary d-inline ml-2">
             <i class="fas fa-user-cog"></i>
             <i class="fas fa-download"></i>
@@ -20,12 +20,27 @@
           <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
           <li class="nav-item">
-            <a href="{{url_for('index.index')}}" class="nav-link active">
+            <a href="{{url_for('index.index')}}" class="nav-link">
               <i class="nav-icon fas fa-tachometer-alt"></i>
-              
-              <p>
-                Dashboard
-              </p>
+              <p>Dashboard</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{{url_for('index.index')}}" class="nav-link">
+              <i class="nav-icon fas fa-flag"></i>
+              <p>Submit a flag!</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{{url_for('networks.network_preset_list')}}" class="nav-link">
+              <i class="nav-icon fas fa-search"></i>
+              <p>Browse Networkpresets</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{{url_for('networks.create_network_preset')}}" class="nav-link">
+              <i class="nav-icon fas fa-network-wired"></i>
+              <p>Compose Networkpreset</p>
             </a>
           </li>
         </ul>

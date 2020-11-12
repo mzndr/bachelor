@@ -1,19 +1,20 @@
-from flask import Blueprint, current_app, jsonify
+from flask import Blueprint, current_app, jsonify, request
 from flask_security import current_user, login_required
 
-from ...core.models.docker import Container, Network
+from ...core.models.docker import (Container, ContainerImage, Network,
+                                   NetworkPreset)
 from ...core.models.user import User
 
 docker_api_bp = Blueprint(
-  name="docker",
+  name="docker_api",
   import_name=__name__,
   url_prefix='/api/docker/'
   )
 
 @docker_api_bp.route('/containers', methods=['GET'])
 @login_required
-def get_available_container_files():
-  files = Container.get_available_container_files()
+def get_available_container_images():
+  files = ContainerImage.get_available_container_images()
   return jsonify(files)
 
 @docker_api_bp.route('/createtest/<string:name>', methods=['GET'])
@@ -28,9 +29,33 @@ def create_test_network(name):
   
   return get_all_networks()
 
-@docker_api_bp.route('/networks/create', methods=['POST'])
+@docker_api_bp.route('/networkpresets/create', methods=['POST'])
 @login_required
-def create_network():
+def create_network_preset():
+  try:
+    json_data = request.get_json()
+    preset_name = json_data["name"]
+    container_images = json_data["containers"]
+    network_preset = NetworkPreset.create_network_preset(
+      name=preset_name,
+      container_image_names=container_images
+    )
+    return jsonify(network_preset.get_json())
+  except Exception as err:
+    return ({"err":str(err)},500)
+
+@docker_api_bp.route('/networkpresets/<int:id>/delete', methods=['DELETE'])
+@login_required
+def delete_network_preset(id):
+  preset = NetworkPreset.get_network_preset_by_id(id)
+  json = preset.get_json()
+  preset.delete()
+
+  return json
+
+@docker_api_bp.route('/networks/start', methods=['POST'])
+@login_required
+def start_network():
   pass
 
 @docker_api_bp.route('/networks/<string:name>', methods=['GET'])

@@ -10,7 +10,7 @@ class Config(object):
   VPN_PORT_RANGE = (50000,50100)
   PUBLIC_IP = "192.168.0.66"
   CONTAINER_DIR = "/home/marius/Projects/bachelor/code/containers"
-  CLEANUP_BEFORE_AND_AFTER = False
+  CLEANUP_BEFORE_AND_AFTER = True
   APP_PREFIX = "vitsl"
 
   ### TESTING ###
