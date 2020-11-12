@@ -23,7 +23,7 @@ def create_test_network(name):
   test_user = User.get_user_by_username(current_app.config["USERNAME"])
   Network.create_network(
     network_name=name,
-    container_folder_names=["apache","apache","apache"],
+    container_image_names=["apache","apache","apache"],
     assign_users=[test_user]
   )
   

@@ -63,6 +63,11 @@ class Container(db.Model):
     return container_object
 
   ### STATIC METHODS ###
+
+  @staticmethod 
+  def provide_context(root_dir):
+    pass
+
   @staticmethod 
   def create_container_dir(folder_name):
     data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)

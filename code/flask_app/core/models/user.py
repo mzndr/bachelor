@@ -69,3 +69,5 @@ class Role(db.Model, RoleMixin):
       "description":self.description,
     }
     return json
+
+class Role(db.Model):

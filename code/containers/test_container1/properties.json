@@ -1,3 +1,13 @@
 {
-  "description":"Simple apache webserver for testing"
+  "description":"Simple apache webserver for testing",
+  "flags":{
+    "flag_1":{
+      "description":"",
+      "hints":[]
+    },
+    "flag_2":{
+      "description":"",
+      "hints":[]
+    }
+  }
 }
