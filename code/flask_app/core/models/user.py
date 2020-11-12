@@ -26,7 +26,7 @@ class User(db.Model, UserMixin):
                           backref=db.backref('users', lazy='dynamic'))
   vpn_crt = db.Column(db.String(255))
 
-
+  group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
 
     
 
@@ -70,4 +70,5 @@ class Role(db.Model, RoleMixin):
     }
     return json
 
-class Role(db.Model):
+class Group(db.Model):
+  users = db.relationship("User")
