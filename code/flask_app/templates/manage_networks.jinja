@@ -1,16 +1,54 @@
 {% extends "_base.jinja" %}
-{% block content_header %}<h1>Browse Network Presets</h1>{% endblock content_header %}
+{% block content_header %}<h1>Manage Networks</h1>{% endblock content_header %}
 {% block content %}
   <div class="container-fluid">
 
     <div class="col">
-      <div class="row">
-        
+
+      <div class="row mb-5">
+        <h4>Running Networks</h4>
+        <table class="table mt-3">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Command</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for network in networks %}
+            <tr>
+              <td>{{ network.name }}</td>
+              <td>{{ network.get_connection_command(current_user) }}</td>
+              <td><button class="btn btn-danger control-button"><i class="fas fa-trash-alt"></i></button></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td>There are no running networks</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
       <!-- /row -->
-      
+
+
       <div class="row">
-        <table class="table table-striped">
+        <h4>Network Presets</h4>
+
+        {% call macros.create_modal_button("create_preset", class="ml-3 btn btn-xs btn-success float-right") %}
+          <i class="fas fa-plus mr-2"></i>
+          Create Preset
+        {% endcall %}
+        {% call macros.create_modal("create_preset", title="Compose a preset!",additional_modal_classes="modal-xl") %}
+          <div class="modal-body">
+            {% include "create_network_preset_modal.jinja" %}
+          </div>
+        {% endcall %}
+      </div>
+      <!-- /row -->
+      <div class="row">
+        
+        <table class="table mt-3">
           <thead>
             <tr>
               <th>Name</th>
@@ -63,12 +101,13 @@
 
     </div>
     <!-- /col -->
+
   </div>
   <!-- /container-fluid -->
-
-{% endblock content %}
+{%endblock content %}
 
 {% block javascripts%}
 {{super()}}
 <script src="{{ url_for('static',filename='js/networkPresetList.js')}}"></script>
+<script src="{{url_for('static', filename='js/createNetworkPreset.js')}}"></script>
 {% endblock %}

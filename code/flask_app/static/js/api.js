@@ -24,6 +24,13 @@ function createNetworkPreset(name,containers,callback){
   postDataAsJson(api_route,payload,callback)
 }
 
+function regenVpnData(callback)
+{
+  let api_route = Flask.url_for("user_api.regen_auth_files")
+  $.get(api_route,callback)
+}
+
+
 function postDataAsJson(url,data,callback){
   $.ajax({
     url: url,

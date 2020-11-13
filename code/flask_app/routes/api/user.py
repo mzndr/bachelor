@@ -4,7 +4,7 @@ from flask import Blueprint, send_file
 from flask_security import current_user, login_required
 
 user_api_bp = Blueprint(
-  name="users",
+  name="user_api",
   import_name=__name__,
   url_prefix='/api/users/'
   )
@@ -20,3 +20,10 @@ def get_current_user_cfg():
     attachment_filename=filename,
     as_attachment=True
   )
+
+
+@user_api_bp.route('/current/regen_auth', methods=['GET'])
+@login_required
+def regen_auth_files():
+  current_user.gen_vpn_files()
+  return {"status":"success"},200

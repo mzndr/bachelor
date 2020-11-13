@@ -22,13 +22,15 @@ function submitData(){
   let name= $("#name").val()
   let containers = []
 
+  if (name = undefined){ return }
+
   $("#selected_images option").each(function()
   {
       containers.push($(this).val())
   });
 
   createNetworkPreset(name,containers,(data)=>{
-    alert("Preset created")
+    location.reload(); 
   })
 }
 

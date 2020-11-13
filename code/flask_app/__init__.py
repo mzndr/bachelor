@@ -91,11 +91,13 @@ def register_blueprints(app):
     from flask_app.routes.api.user import user_api_bp
     from flask_app.routes.views.index import index_bp
     from flask_app.routes.views.networks import networks_bp
+    from flask_app.routes.views.users import users_bp
     blueprints = [
         docker_api_bp,
         user_api_bp,
         index_bp,
-        networks_bp
+        networks_bp,
+        users_bp
     ]
     
     for blueprint in blueprints:

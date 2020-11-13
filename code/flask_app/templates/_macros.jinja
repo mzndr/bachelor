@@ -1,16 +1,17 @@
 {% macro create_modal_button(modal_id,class="btn btn-primary")%}
+<!-- Modal-Button {{ modal_id }} -->
 <button id="modal{{id}}button" type="button" class="{{class}}" data-toggle="modal" data-target="#modal{{modal_id}}">
   {{ caller() }}
 </button>
 {% endmacro %}
 
-{% macro create_modal(id,title) %}
-<!-- Modal -->
+{% macro create_modal(id,title, additional_modal_classes) %}
+<!-- Modal {{ id }} - {{ title }} -->
 <div class="modal fade" id="modal{{id}}" tabindex="-1" role="dialog" aria-labelledby="modal{{id}}Label" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog {{ additional_modal_classes }}" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modal{{id}}Label">Modal title</h5>
+        <h5 class="modal-title" id="modal{{id}}Label">{{title}}</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>

@@ -1,27 +1,21 @@
 from flask import Blueprint, render_template
 from flask_security import current_user, login_required
 
-from flask_app.core.models.docker import NetworkPreset
+from flask_app.core.models.docker import Network, NetworkPreset
 
 networks_bp = Blueprint(
   name="networks",
   import_name=__name__
   )
 
-@networks_bp.route('/create_preset', methods=['GET'])
+@networks_bp.route('/manage_networks', methods=['GET'])
 @login_required
-def create_network_preset():
-  return render_template(
-    "create_network_preset.jinja",
-    title="Compose Network Preset"
-    )
-
-@networks_bp.route('/list_presets', methods=['GET'])
-@login_required
-def network_preset_list():
+def manage_networks():
+  networks = Network.get_all_networks()
   presets = NetworkPreset.query.all()
   return render_template(
-    "network_preset_list.jinja",
-    title="Browse Network Presets",
-    presets=presets
+    "manage_networks.jinja",
+    networks=networks,
+    presets=presets,
+    title="Manage Networks"
     )

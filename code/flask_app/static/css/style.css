@@ -2,17 +2,57 @@
   width:40px;
 }
 
+input{
+  background-color: #202327;
+
+}
+
+
+select{
+  background-color: #202327;
+}
+
 .create-network-preset select[multiple]{
   height: 500px;
-  width:100%;
+  width:95%;
   overflow: none;
 }
 
 .create-network-preset .add-remove-button{
-  width:50px;
+  width:525px;
 }
 .create-network-preset #name{
-  width:400px;
+  width:1000px;
 }
 
+.create-network-preset-modal{
+  width: 90%;
+}
 
+.modal-xl{
+  width: 1400px;
+}
+
+code {
+  color: crimson;
+  background-color: #343a40;
+}
+
+.modal-header {
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  color: white;
+  background-color: #343a40; 
+}
+
+.modal-footer {
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;  
+  color: white;
+  background-color: #343a40; 
+}
+
+.modal-body {
+  color: white;
+  background-color: #343a40; 
+}

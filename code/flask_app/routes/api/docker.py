@@ -3,7 +3,7 @@ from flask_security import current_user, login_required
 
 from ...core.models.docker import (Container, ContainerImage, Network,
                                    NetworkPreset)
-from ...core.models.user import User
+from ...core.models.user import Group, User
 
 docker_api_bp = Blueprint(
   name="docker_api",
@@ -53,10 +53,28 @@ def delete_network_preset(id):
 
   return json
 
-@docker_api_bp.route('/networks/start', methods=['POST'])
+@docker_api_bp.route('/networkpresets/<int:id>/start', methods=['POST'])
 @login_required
-def start_network():
-  pass
+def start_network(id):
+  preset = NetworkPreset.get_network_preset_by_id(id)
+  json_data = request.get_json()
+  assign_users_ids = json_data["assign_users"]
+  assign_users = []
+  assign_groups_ids = json_data["assign_groups"]
+  assign_groups = []
+  netork_name = json_data["network_name"]
+
+  for user_id in assign_users_ids:
+    assign_users.append(User.get_user_by_id(user_id))
+  for group_id in assign_groups_ids:
+    assign_groups.append(Group.get_group_by_id(group_id))
+
+  network = preset.create_network(
+    assign_users=assign_groups,
+    assign_groups=assign_users,
+    name=netork_name
+    )
+  return network.get_json()
 
 @docker_api_bp.route('/networks/<string:name>', methods=['GET'])
 @login_required

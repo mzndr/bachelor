@@ -10,6 +10,6 @@ index_bp = Blueprint(
 @login_required
 def index():
   return render_template(
-    "index.jinja",
+    "dashboard.jinja",
     title="index"
     )

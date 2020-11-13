@@ -10,7 +10,7 @@
       <!-- /row -->
 
       <div class="row">
-        <table class="table table-striped">
+        <table class="table">
           <thead>
             <tr>
               <th>Name</th>
@@ -21,7 +21,7 @@
             {% for network in current_user.assigned_networks %}
             <tr>
               <td>{{ network.name }}</td>
-              <td>{{ network.get_connection_command(current_user) }}</td>
+              <td><code>{{ network.get_connection_command(current_user) }}</code></td>
               <td><button class="btn btn-danger control-button"><i class="fas fa-trash-alt"></i></button></td>
             </tr>
             {% else %}

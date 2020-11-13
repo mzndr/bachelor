@@ -6,14 +6,18 @@
       <!-- Sidebar user panel (optional) -->
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="info">
-          <a href="#" class="ml-5">{{current_user.username}}</a>
-          <a href="{{url_for('users.get_current_user_cfg')}}"class="btn btn-primary d-inline ml-2">
+          <a href="#" class="ml-1">{{current_user.username}}</a>
+          {% call macros.create_modal_button("download_cfg", class="btn btn-primary d-inline ml-2") %}
             <i class="fas fa-user-cog"></i>
             <i class="fas fa-download"></i>
-          </a>
+          {% endcall %}
+          
+          {% call macros.create_modal_button("regen_auth", class="btn btn-warning d-inline ml-2") %}
+            <i class="fas fa-key"></i>
+            <i class="fas fa-sync-alt"></i>
+          {% endcall %}
         </div>
       </div>
-
       <!-- Sidebar Menu -->
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
@@ -25,22 +29,19 @@
               <p>Dashboard</p>
             </a>
           </li>
+
+          
+          <!-- Admin Locations -->
           <li class="nav-item">
-            <a href="{{url_for('index.index')}}" class="nav-link">
-              <i class="nav-icon fas fa-flag"></i>
-              <p>Submit a flag!</p>
+            <a href="{{url_for('users.manage_users')}}" class="nav-link">
+              <i class="nav-icon fas fa-users-cog"></i>
+              <p>Manage Users</p>
             </a>
           </li>
           <li class="nav-item">
-            <a href="{{url_for('networks.network_preset_list')}}" class="nav-link">
-              <i class="nav-icon fas fa-search"></i>
-              <p>Browse Networkpresets</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{{url_for('networks.create_network_preset')}}" class="nav-link">
+            <a href="{{url_for('networks.manage_networks')}}" class="nav-link">
               <i class="nav-icon fas fa-network-wired"></i>
-              <p>Compose Networkpreset</p>
+              <p>Manage Networks</p>
             </a>
           </li>
         </ul>
@@ -50,3 +51,35 @@
     <!-- /.sidebar -->
   </aside>
   <!-- /Main sidebar container -->
+
+
+{% call macros.create_modal("regen_auth", title="Confirmation Required") %}
+  <div class="modal-body">
+    <p>
+      <h4>WARNING:</h4>
+      You are about to regenerate your vpn authentication data.
+      You won't be able to connect to running networks until they
+      are restarted. You'll also have to <a href="{{url_for('user_api.get_current_user_cfg')}}">re-download your vpn config.</a>
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button onclick="regenVpnDataButton()" class="btn btn-danger d-inline ml-2">
+      <i id="regen_data_button_icon"  class="fas fa-exclamation-circle mr-1"></i>
+      Regenerate VPN Cert and Private Key
+    </button>
+  </div>
+{% endcall %}
+
+{% call macros.create_modal("download_cfg", title="ReadMe.txt") %}
+  <div class="modal-body">
+    <p>
+      Download the config file and place it in the root of your home directory:
+      <code>mv ~/Downloads/{{current_user.username}}.ovpn ~</code>
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button onclick="location.href=`{{url_for('user_api.get_current_user_cfg')}}`" class="btn btn-primary">
+    <i class="fas fa-file-download mr-2"></i>Download Config
+    </button>
+  </div>
+{% endcall %}

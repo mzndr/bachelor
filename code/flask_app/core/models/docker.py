@@ -298,7 +298,7 @@ class NetworkPreset(db.Model):
     db.session.delete(self)
     db.session.commit()
 
-  def create_network(self,assign_users,name=None):
+  def create_network(self,assign_users,assign_groups,name=None):
     """Creates a network from the preset"""
     container_image_names = []
     for image in self.container_images:
@@ -306,10 +306,20 @@ class NetworkPreset(db.Model):
         raise ValueError(f"Container image '{image_name}' does not exist on disk. If its there, check if there is a dockerfile in its root directory.")
       container_image_names.append(image.name)
 
+    users = []
+
+    for user in assign_users:
+      if user not in users:
+        users.append(user)
+    for group in assign_groups:
+      for user in group.users:
+        if user not in users:
+          users.append(user)
+
     network = Network.create_network(
       network_name= name or self.name,
       container_image_names=container_image_names,
-      assign_users=assign_users
+      assign_users=users
     )
     return network
   

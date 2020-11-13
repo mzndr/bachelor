@@ -55,8 +55,16 @@ class User(db.Model, UserMixin):
     pass
 
   @staticmethod
+  def get_all_users():
+    return User.query.all()
+  
+  @staticmethod
   def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
+
+  @staticmethod
+  def get_user_by_id(id):
+    return User.query.get(id)
 
 class Role(db.Model, RoleMixin):
   id = db.Column(db.Integer(), primary_key=True)
@@ -102,3 +110,11 @@ class Group(db.Model):
     group.assign_users(assign_users)
     db.session.add(group)
     db.session.commit()
+
+  @staticmethod
+  def get_all_groups():
+    return Group.query.all()
+
+  @staticmethod
+  def get_group_by_id(id):
+    return Group.query.get(id)
