@@ -1,6 +1,9 @@
-import docker
+import uuid
+
 from flask_security import RoleMixin, UserMixin
 from flask_sqlalchemy import SQLAlchemy
+
+import docker
 
 from ..db import db
 from ..models.docker import Container, Network
@@ -15,6 +18,8 @@ class User(db.Model, UserMixin):
   username = db.Column(db.String(255), unique=True)
   email = db.Column(db.String(255), unique=True)
   password = db.Column(db.String(255))
+
+  redeemed_flags = db.relationship("Flag",backref="redeemed_by")
 
   vpn_crt = db.Column(db.String(2**16))
   vpn_key = db.Column(db.String(2**16))
@@ -37,8 +42,6 @@ class User(db.Model, UserMixin):
     self.vpn_cfg = user_cfg
     db.session.add(self)
     db.session.commit()
-
-
 
   def get_json(self):
     json = {
@@ -80,6 +83,8 @@ class Role(db.Model, RoleMixin):
 
 class Group(db.Model):
   id = db.Column(db.Integer, primary_key=True)
+  invite_code = db.Column(db.String, unique=True)
+  name = db.Column(db.String, unique=True)
   users = db.relationship("User")
 
   def assign_users(self, users):
@@ -101,15 +106,31 @@ class Group(db.Model):
     db.session.commit()
 
   def delete(self):
-    db.session.remove(self)
+    db.session.delete(self)
     db.session.commit()
 
+  def get_json(self):
+    json = {
+      "id":self.id,
+      "name":self.name,
+      "users":[]
+    }
+
+    for user in self.users:
+      json["users"].append(user.get_json())
+
+    return json
+
   @staticmethod
-  def create_group(assign_users):
+  def create_group(name,assign_users):
     group = Group()
+    group.name = name
     group.assign_users(assign_users)
+    group.invite_code = str(uuid.uuid4()).replace("-","")
     db.session.add(group)
     db.session.commit()
+
+    return group
 
   @staticmethod
   def get_all_groups():
@@ -118,3 +139,7 @@ class Group(db.Model):
   @staticmethod
   def get_group_by_id(id):
     return Group.query.get(id)
+  
+  @staticmethod
+  def get_group_by_invite_code(code):
+    return Group.query.filter_by(invite_code=code).first()

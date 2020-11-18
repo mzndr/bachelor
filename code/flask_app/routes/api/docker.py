@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, jsonify, request
 from flask_security import current_user, login_required
 
-from ...core.models.docker import (Container, ContainerImage, Network,
+from ...core.models.docker import (Container, ContainerImage, Flag, Network,
                                    NetworkPreset)
 from ...core.models.user import Group, User
 
@@ -89,7 +89,6 @@ def get_network_vpn_data(name):
   return jsonify(network.get_connection_command(current_user))
 
 @docker_api_bp.route('/networks/<string:name>/delete', methods=['DELETE'])
-
 def delete_network(name):
   network = Network.get_network_by_name(name)
   json = network.get_json()
@@ -105,3 +104,20 @@ def get_all_networks():
     json.append(network.get_json())
 
   return jsonify(json)
+
+
+@docker_api_bp.route('/networks/redeem_flag', methods=['POST'])
+@login_required
+def redeem_flag():
+  networks = Network.get_all_networks()
+  json_data = request.get_json()
+  flag_code = json_data["flag"]
+  flag = Flag.get_flag_by_code(flag_code)
+  for network in current_user.assigned_networks:
+    if flag in network.get_redeemed_flags():
+      return {"stauts":"flag already redeemed!"},410
+    if flag in network.get_unredeemed_flags():
+      flag.redeem(current_user)
+      return {"stauts":"flag successfully redeemed!"},200
+  
+  return {"stauts":"invalid flag, flag not found!"},404

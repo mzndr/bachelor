@@ -2,9 +2,6 @@
 {% block content_header %}<h1>Manage Networks</h1>{% endblock content_header %}
 {% block content %}
   <div class="container-fluid">
-
-    <div class="col">
-
       <div class="row mb-5">
         <h4>Running Networks</h4>
         <table class="table mt-3">
@@ -34,15 +31,12 @@
 
       <div class="row">
         <h4>Network Presets</h4>
-
         {% call macros.create_modal_button("create_preset", class="ml-3 btn btn-xs btn-success float-right") %}
           <i class="fas fa-plus mr-2"></i>
           Create Preset
         {% endcall %}
         {% call macros.create_modal("create_preset", title="Compose a preset!",additional_modal_classes="modal-xl") %}
-          <div class="modal-body">
-            {% include "create_network_preset_modal.jinja" %}
-          </div>
+          {% include "modals/create_network_preset_modal.jinja" %}
         {% endcall %}
       </div>
       <!-- /row -->
@@ -69,16 +63,18 @@
               </td>
               <td>
                 <!-- Start network button -->
-                <button class="btn btn-success control-button float-left mr-1">
+                {% call macros.create_modal_button("start_" + preset.id.__str__(), class="btn btn-success control-button float-left mr-1") %}
                   <i class="fas fa-play"></i>
-                </button>
+                {% endcall %}
+                {% call macros.create_modal("start_" + preset.id.__str__(), title="Start a network!") %}
+                  {% include "modals/start_network_modal.jinja"%}
+                {% endcall %}
 
                 <!-- Delete preset button -->
-
-                {% call macros.create_modal_button(preset.id, class="btn btn-danger control-button float-left") %}
+                {% call macros.create_modal_button("delete_" + preset.id.__str__(), class="btn btn-danger control-button float-left") %}
                   <i class="fas fa-trash-alt"></i>
                 {% endcall %}
-                {% call macros.create_modal(preset.id, title="Confirmation required!") %}
+                {% call macros.create_modal("delete_" + preset.id.__str__(), title="Confirmation required!") %}
                   <div class="modal-body">
                     <p>Do you really want to delete {{preset.name}}?</p>
                   </div>
@@ -98,10 +94,6 @@
         </table>
       </div>
       <!-- /row -->
-
-    </div>
-    <!-- /col -->
-
   </div>
   <!-- /container-fluid -->
 {%endblock content %}

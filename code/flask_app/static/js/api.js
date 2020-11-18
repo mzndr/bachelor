@@ -18,8 +18,8 @@ function deleteNetworkPreset(id,callback){
 function createNetworkPreset(name,containers,callback){
   let api_route = Flask.url_for("docker_api.create_network_preset")
   let payload = {
-    name,
-    containers
+    "name":name,
+    "containers":containers
   }
   postDataAsJson(api_route,payload,callback)
 }
@@ -28,6 +28,22 @@ function regenVpnData(callback)
 {
   let api_route = Flask.url_for("user_api.regen_auth_files")
   $.get(api_route,callback)
+}
+
+
+function createGroup(name,callback){
+  let api_route = Flask.url_for("user_api.create_group")
+  let data = {"name":name}
+  postDataAsJson(api_route,data,callback)
+}
+
+function deleteGroup(id,callback){
+  let api_route = Flask.url_for("user_api.delete_group",{"id":id})
+  return $.ajax({
+    url: api_route,
+    type: 'DELETE',
+    success: callback
+  });
 }
 
 
@@ -40,4 +56,3 @@ function postDataAsJson(url,data,callback){
     success: (result)=>{callback(result)}
 });
 }
-

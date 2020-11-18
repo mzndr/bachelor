@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template
-from flask_security import current_user, login_required
-
 from flask_app.core.models.user import Group, Role, User
+from flask_security import current_user, login_required
 
 users_bp = Blueprint(
   name="users",
@@ -20,3 +19,11 @@ def manage_users():
     groups=groups,
     title="Manage Users"
     )
+
+@users_bp.route('/group_invite/<string:code>', methods=['GET'])
+@login_required
+def group_invite(code):
+  group: Group = Group.get_group_by_invite_code(code)
+  group.assign_users([current_user])
+
+  return {"status":"success"},200

@@ -1,14 +1,16 @@
 import json
 import os
+import re
 import shutil
 import tempfile
 import uuid
 from distutils.dir_util import copy_tree
 
-import docker
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
+
+import docker
 
 from ..db import db
 
@@ -23,7 +25,7 @@ class Container(db.Model):
   id = db.Column(db.Integer(), primary_key=True, nullable=False)
   name = db.Column(db.String(255), unique=True, nullable=False)
   files_location = db.Column(db.String(1024), unique=True, nullable=False)
-  docker_id = db.Column(db.String(255), unique=True, nullable=False)
+  docker_id = db.Column(db.String(255), unique=True)
   network_id = db.Column(db.Integer, db.ForeignKey('network.id'))
   
   def read_properties(self):
@@ -62,17 +64,36 @@ class Container(db.Model):
     container_object.reload() # Also tell docker-daemon to fetch current information about the container. 
     return container_object
 
-  ### STATIC METHODS ###
+  def place_flags(self):
+    regex = r'(\[\#\ )+([a-z,A-Z,0-9,_])+(\ \#\])'
+    rootdir = self.files_location
+    for subdir, dirs, files in os.walk(rootdir):
+      for file in files:
+        filepath = os.path.join(subdir, file)
+        with open(filepath,"r") as fr:
+          f_content = fr.read()
+          new_content = re.sub(
+            pattern=regex,
+            repl=self.network.get_flag,
+            string=f_content
+            )
+          if new_content != f_content:
+            with open(filepath,"w") as fw:
+              fw.write(new_content)
 
-  @staticmethod 
-  def provide_context(root_dir):
+
+
+
+  def redeem_flag(self,flag_code,user):
     pass
 
+  ### STATIC METHODS ###
   @staticmethod 
   def create_container_dir(folder_name):
     data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
     root_location = tempfile.mkdtemp(prefix=current_app.config["APP_PREFIX"] + "_" + folder_name + "_")
     copy_tree(data_path, root_location)
+
     return root_location
 
   @staticmethod
@@ -88,24 +109,28 @@ class Container(db.Model):
     ):
     """Creates a container, adds it to the specified network and then runs it.
     """
-    network_name = network.name
-    network_id = network.id
 
     data_path = None
     if existing_location is None:
       data_path = Container.create_container_dir(folder_name)
     else:
       data_path = existing_location
+    
+    # generate random name with network name as prefix
+    container_name = f"{current_app.config['APP_PREFIX']}_{network.name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
+    
+    container_db = Container(
+      name=container_name,
+      files_location=data_path,
+      network = network
+    )
+
+    container_db.place_flags()
 
     image, logs = docker_client.images.build(
       path=data_path,
       nocache=True,
     )
-
-    # generate random name with network name as prefix
-    container_name = f"{current_app.config['APP_PREFIX']}_{network_name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
-  
-
 
     container = docker_client.containers.run(
       image=image,
@@ -120,12 +145,8 @@ class Container(db.Model):
     )
 
     container.reload() # Let the docker daemon refetch container information
-    container_db = Container(
-      name=container.name,
-      files_location=data_path,
-      network_id = network_id,
-      docker_id=container.id,
-    )
+
+    container_db.docker_id = container.id
     db.session.add(container_db)
     db.session.flush()
     return container_db
@@ -215,9 +236,9 @@ class Container(db.Model):
   @staticmethod
   def cleanup():
     containers = Container.query.all()
-    for container in containers:
-      container.delete()
-    docker_client.containers.prune()
+    for container in docker_client.containers.list():
+      if "vitsl" in container.name:
+        container.kill()
 
 class ContainerImage(db.Model):
   """Model for holding a container image name"""
@@ -321,6 +342,8 @@ class NetworkPreset(db.Model):
       container_image_names=container_image_names,
       assign_users=users
     )
+
+
     return network
   
   @staticmethod
@@ -357,17 +380,21 @@ class Network(db.Model):
   """Model for a running network"""
   id = db.Column(db.Integer(), primary_key=True)
   vpn_port = db.Column(db.Integer(), unique=True)
+  gateway = db.Column(db.String(16))
   name = db.Column(db.String(255), unique=True)
-  containers = db.relationship("Container")
+  containers = db.relationship("Container",backref="network")
+  flags = db.relationship("Flag",backref="network")
   assigned_users = db.relationship(
                           'User', 
                           secondary=network_users,
                           backref=db.backref('assigned_networks', lazy='dynamic')
                           )
+  
   def get_json(self):
     json = {
       "id": self.id,
       "name": self.name,
+      "gateway": self.gateway,
       "vpn_port": self.vpn_port,
       "assigned_users": [],
       "containers": [],
@@ -380,6 +407,40 @@ class Network(db.Model):
       json["containers"].append(container.get_json())
 
     return json
+
+
+  def get_flag(self,regex_match):
+    """Gets a flag if it exists, or creates it and returns it if not"""
+
+    flag_name = regex_match.group(0).replace("[# ","").replace(" #]","")
+    
+    for flag in self.flags:
+      if flag.name == flag_name:
+        return str(flag)
+
+    flag = Flag.create_flag(
+      network=self,
+      flag_name=flag_name
+    )
+
+    return str(flag)
+
+  def get_flags(self):
+    return self.flags
+
+  def get_redeemed_flags(self):
+    ret = []
+    for flag in self.flags:
+      if flag.redeemed:
+        ret.append(flag)
+    return ret
+
+  def get_unredeemed_flags(self):
+    ret = []
+    for flag in self.flags:
+      if not flag.redeemed:
+        ret.append(flag)
+    return ret
 
   def delete(self):
     for container in self.containers:
@@ -418,8 +479,11 @@ class Network(db.Model):
         check_duplicate=True,
         internal=False
       )
+    network.reload()
+    gateway = network.attrs["IPAM"]["Config"][0]["Gateway"]
     network_db = Network(
       name=network_name,
+      gateway=gateway,
       assigned_users=assign_users
     )
     db.session.add(network_db)
@@ -440,7 +504,41 @@ class Network(db.Model):
 
   @staticmethod
   def cleanup():
-    networks = Network.query.all()
-    for network in networks:
+    for network in Network.get_all_networks():
       network.delete()
     docker_client.networks.prune()
+
+class Flag(db.Model):
+  id = db.Column(db.Integer(), primary_key=True)
+  name = db.Column(db.String)
+  code = db.Column(db.String, unique=True)
+  network_id = db.Column(db.Integer, db.ForeignKey('network.id'))
+  redeemed = db.Column(db.Boolean)
+
+  def __str__(self):
+    return "FLAG{" + self.code + "}"
+
+  def redeem(self,user):
+    self.redeemed = True
+    self.redeemed_by = user
+    db.session.add(self)
+    db.session.commit()
+
+  @staticmethod
+  def create_flag(network, flag_name):
+    code = str(uuid.uuid4()).replace("-","")
+    flag = Flag(
+      network=network,
+      name=flag_name,
+      code=code,
+      redeemed=False
+    )
+    db.session.add(flag)
+    db.session.commit()
+    return flag
+
+  @staticmethod
+  def get_flag_by_code(code):
+    code = code.replace("FLAG{","").replace("}")
+    return Flag.query.filter_by(code=code).first()
+

@@ -4,10 +4,10 @@ import atexit
 import os
 
 from flask import Flask
+from flask_jsglue import JSGlue
 from flask_security import Security, SQLAlchemyUserDatastore
 
 from flask_app.core.db import db
-from flask_jsglue import JSGlue
 
 from .core.models.docker import (Container, ContainerImage, Network,
                                  NetworkPreset)
@@ -18,8 +18,8 @@ def cleanup(app):
     if app.config["CLEANUP_BEFORE_AND_AFTER"]:
         with app.app_context():
             app.logger.info("Cleaning up containers and networks...")
-            Network.cleanup()
             Container.cleanup()
+            Network.cleanup()
 
 def create_app(test_config=None):
     # create and configure the app

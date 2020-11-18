@@ -21,8 +21,7 @@ function removeEntries(){
 function submitData(){
   let name= $("#name").val()
   let containers = []
-
-  if (name = undefined){ return }
+  if (name == undefined){ return }
 
   $("#selected_images option").each(function()
   {

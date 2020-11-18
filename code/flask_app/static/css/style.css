@@ -14,19 +14,23 @@ select{
 
 .create-network-preset select[multiple]{
   height: 500px;
-  width:95%;
+  width:90%;
   overflow: none;
 }
 
 .create-network-preset .add-remove-button{
-  width:525px;
+  width:500px;
 }
 .create-network-preset #name{
-  width:1000px;
+  width:900px;
 }
 
 .create-network-preset-modal{
-  width: 90%;
+  width: 100%;
+}
+
+.create-group #group_name{
+  width:500px;
 }
 
 .modal-xl{
@@ -38,12 +42,25 @@ code {
   background-color: #343a40;
 }
 
+.copy-span{
+  background-color: #1a1f24; 
+  padding: 2px;
+  margin: 4px;
+  padding-bottom: 7px;
+  border-radius: 5px;
+}
+
 .modal-header {
   border-top-left-radius: 3px;
   border-top-right-radius: 3px;
   color: white;
   background-color: #343a40; 
 }
+
+.modal-content {
+  background-color: #343a40; 
+}
+
 
 .modal-footer {
   border-bottom-left-radius: 3px;
@@ -55,4 +72,12 @@ code {
 .modal-body {
   color: white;
   background-color: #343a40; 
+}
+
+.flag-input{
+  width:500px;
+}
+
+.flag-input input{
+  text-align:center;
 }

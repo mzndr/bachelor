@@ -1,10 +1,6 @@
 {% extends "_base.jinja" %}
-{% block content_header %}<h1>Manage Networks</h1>{% endblock content_header %}
 {% block content %}
   <div class="container-fluid">
-
-    <div class="col">
-
       <div class="row mb-5">
         <h4>Users</h4>
         <table class="table mt-3">
@@ -31,6 +27,13 @@
 
       <div class="row">
         <h4>Groups</h4>
+        {% call macros.create_modal_button("create_group", class="ml-3 btn btn-xs btn-success float-right") %}
+          <i class="fas fa-plus mr-2"></i>
+          Create Group
+        {% endcall %}
+        {% call macros.create_modal("create_group", title="Create a group!",additional_modal_classes="modal-xl") %}
+            {% include "modals/create_group_modal.jinja" %}
+        {% endcall %}
       </div>
       <!-- /row -->
       <div class="row">
@@ -39,12 +42,39 @@
           <thead>
             <tr>
               <th>Name</th>
+              <th>Users</th>
+              <th>Invite Link</th>
+              <th></th>
             </tr>
+            
           </thead>
           <tbody>
             {% for group in groups %}
-            <tr id="{{preset.id}}">
+            <tr id="group_{{group.id}}">
               <td>{{ group.name }}</td>
+              <td>
+                {% for user in group.users %}
+                <span class="mr-2">{{ user.username }}</span>
+                {% else %}
+                None.
+                {% endfor %}
+              </td>
+              <td><code>{{ url_for('users.group_invite',code=group.invite_code, _external=True) }}</code></td>
+              <td>
+                <!-- Delete preset button -->
+                {% call macros.create_modal_button("_group_" + group.id.__str__(), class="btn btn-danger control-button float-left") %}
+                  <i class="fas fa-trash-alt"></i>
+                {% endcall %}
+                {% call macros.create_modal("_group_" + group.id.__str__(), title="Confirmation required!") %}
+                  <div class="modal-body">
+                    <p>Do you really want to delete {{group.name}}?</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="deleteGroupButton('{{group.id}}')">Yes</button>
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
+                  </div>
+                {% endcall %}
+              </td>
             </tr>
             {% else %}
             <tr>
@@ -55,15 +85,11 @@
         </table>
       </div>
       <!-- /row -->
-
-    </div>
-    <!-- /col -->
-
   </div>
   <!-- /container-fluid -->
 {%endblock content %}
 
 {% block javascripts%}
 {{super()}}
-
+<script src="{{url_for('static', filename='js/manageGroups.js')}}"></script>
 {% endblock %}

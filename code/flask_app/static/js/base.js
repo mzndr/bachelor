@@ -3,17 +3,18 @@ $(document).ready(function(){
     let $code = $(this)
 
     let text = $code.text()
-    $code.wrap("<span></span>")
-    $code.after(`<button class="btn btn-primary btn-xs" onclick="copyToClipborad('${text}')"><i class="far fa-copy"></i></button>`)
+    $code.wrap("<span class='copy-span elevation-1'></span>")
+    $code.after(`<button class="btn btn-primary btn-xs ml-2" onclick="copyToClipborad('${text}')"><i class="far fa-copy"></i></button>`)
   })
 })
 
 function copyToClipborad(text){
-  let $tmpTextarea = $('<textarea id="abhfds3234" style="display:none;"><textarea/>')
+  let id = "tmp_textbox_" + Math.random();
+  let $tmpTextarea = $(`<textarea id="${id}" style=""><textarea/>`)
   $(document.body).append($tmpTextarea)
   $tmpTextarea.val(text)
 
-  var copyText = document.getElementById("abhfds3234");
+  var copyText = document.getElementById(id);
   copyText.select(); 
 
   document.execCommand("copy");

@@ -1,7 +1,9 @@
 import io
 
-from flask import Blueprint, send_file
+from flask import Blueprint, request, send_file
 from flask_security import current_user, login_required
+
+from flask_app.core.models.user import Group, Role, User
 
 user_api_bp = Blueprint(
   name="user_api",
@@ -27,3 +29,26 @@ def get_current_user_cfg():
 def regen_auth_files():
   current_user.gen_vpn_files()
   return {"status":"success"},200
+
+
+
+
+@user_api_bp.route('/groups/create', methods=['POST'])
+@login_required
+def create_group():
+  json_data = request.get_json()
+  name = json_data["name"]
+  group = Group.create_group(
+    name=name,
+    assign_users=[]
+  )
+  return group.get_json()
+
+
+@user_api_bp.route('/groups/delete/<int:id>', methods=['DELETE'])
+@login_required
+def delete_group(id):
+  group = Group.get_group_by_id(id)
+  json = group.get_json()
+  group.delete()
+  return json

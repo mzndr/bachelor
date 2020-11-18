@@ -2,10 +2,24 @@
 {% block content_header %}<h1>Dashboard</h1>{% endblock content_header %}
 {% block content %}
   <div class="container-fluid">
-
-    <div class="col">
       <div class="row">
-        
+          <div class="col">
+            <div class="d-flex justify-content-center">
+              <div class="small-box bg-primary flag-input">
+                <div class="inner">
+                  <h4>Submit a Flag</h4>
+                  <input class="form-control" id="submit_flag_text" type="text" placeholder="FLAG{xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}" style="width:100%;">
+                </div>
+                <div class="icon">
+                  <i class="fas fa-flag"></i>
+                </div>
+                <a href="#" class="small-box-footer">
+                  Submit <i class="fas fa-check"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- /row -->
 
@@ -14,15 +28,20 @@
           <thead>
             <tr>
               <th>Name</th>
+              <th>Gateway</th>
+              <th>Flags</th>
               <th>Command</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {% for network in current_user.assigned_networks %}
             <tr>
               <td>{{ network.name }}</td>
+              <td>{{ network.gateway }}</td>
+              <td>{{ network.get_redeemed_flags().__len__() }}/{{ network.get_flags().__len__() }}</td>
               <td><code>{{ network.get_connection_command(current_user) }}</code></td>
-              <td><button class="btn btn-danger control-button"><i class="fas fa-trash-alt"></i></button></td>
+              <td><button class="btn btn-warning control-button"><i class="fas fa-redo-alt"></i></button></td>
             </tr>
             {% else %}
             <tr>
@@ -33,9 +52,6 @@
         </table>
       </div>
       <!-- /row -->
-
-    </div>
-    <!-- /col -->
   </div>
   <!-- /container-fluid -->
 {%endblock content %}
