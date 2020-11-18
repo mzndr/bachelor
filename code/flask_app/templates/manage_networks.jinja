@@ -15,7 +15,7 @@
             {% for network in networks %}
             <tr>
               <td>{{ network.name }}</td>
-              <td>{{ network.get_connection_command(current_user) }}</td>
+              <td><code>{{ network.get_connection_command(current_user) }}</code></td>
               <td><button class="btn btn-danger control-button"><i class="fas fa-trash-alt"></i></button></td>
             </tr>
             {% else %}
@@ -66,7 +66,7 @@
                 {% call macros.create_modal_button("start_" + preset.id.__str__(), class="btn btn-success control-button float-left mr-1") %}
                   <i class="fas fa-play"></i>
                 {% endcall %}
-                {% call macros.create_modal("start_" + preset.id.__str__(), title="Start a network!") %}
+                {% call macros.create_modal("start_" + preset.id.__str__(), title="Start a network!",additional_modal_classes="modal-xl") %}
                   {% include "modals/start_network_modal.jinja"%}
                 {% endcall %}
 

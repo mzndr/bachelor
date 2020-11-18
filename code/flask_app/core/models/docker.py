@@ -19,6 +19,10 @@ network_users = db.Table('network_users',
         db.Column('user_id',    db.Integer(), db.ForeignKey('user.id')),
         db.Column('network_id', db.Integer(), db.ForeignKey('network.id')))
 
+network_groups = db.Table('network_groups',
+        db.Column('group_id',    db.Integer(), db.ForeignKey('group.id')),
+        db.Column('network_id', db.Integer(), db.ForeignKey('network.id')))
+
 docker_client = docker.from_env()        
 ### Container Management ###
 class Container(db.Model):
@@ -160,6 +164,13 @@ class Container(db.Model):
     data_path = Container.create_container_dir(vpn_image)
     vpn_files = os.path.join(data_path,"data")
     # Copy user authentication files into vpn
+
+    users = network.assigned_users
+    for group in network.assigned_groups:
+      for user in group.users:
+        if user not in users:
+          users.append(user)
+
     for user in network.assigned_users:
       crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
       key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
@@ -389,6 +400,11 @@ class Network(db.Model):
                           secondary=network_users,
                           backref=db.backref('assigned_networks', lazy='dynamic')
                           )
+  assigned_groups = db.relationship(
+                        'Group', 
+                        secondary=network_groups,
+                        backref=db.backref('assigned_networks', lazy='dynamic')
+                        )
   
   def get_json(self):
     json = {
@@ -449,6 +465,10 @@ class Network(db.Model):
       docker_client.networks.get(self.name).remove()
     except:
       pass
+    
+    for flag in self.flags:
+      flag.delete()
+
     db.session.delete(self)
     db.session.commit()
 
@@ -473,7 +493,7 @@ class Network(db.Model):
     return Network.query.all()
 
   @staticmethod
-  def create_network(network_name,container_image_names,assign_users = []):
+  def create_network(network_name,container_image_names,assign_users = [], assign_groups = []):
     network = docker_client.networks.create(
         name=network_name,
         check_duplicate=True,
@@ -484,8 +504,10 @@ class Network(db.Model):
     network_db = Network(
       name=network_name,
       gateway=gateway,
-      assigned_users=assign_users
+      assigned_users=assign_users,
+      assigned_groups=assign_groups
     )
+
     db.session.add(network_db)
     db.session.flush()
 
@@ -513,6 +535,7 @@ class Flag(db.Model):
   name = db.Column(db.String)
   code = db.Column(db.String, unique=True)
   network_id = db.Column(db.Integer, db.ForeignKey('network.id'))
+  redeemed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   redeemed = db.Column(db.Boolean)
 
   def __str__(self):
@@ -522,6 +545,10 @@ class Flag(db.Model):
     self.redeemed = True
     self.redeemed_by = user
     db.session.add(self)
+    db.session.commit()
+
+  def delete(self):
+    db.session.delete(self)
     db.session.commit()
 
   @staticmethod

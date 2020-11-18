@@ -46,6 +46,11 @@ function deleteGroup(id,callback){
   });
 }
 
+function redeemFlag(flag,callback){
+  let api_route = Flask.url_for("docker_api.redeem_flag")
+  data = {"flag":flag}
+  postDataAsJson(api_route,data,callback)
+}
 
 function postDataAsJson(url,data,callback){
   $.ajax({

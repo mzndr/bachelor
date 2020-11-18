@@ -4,9 +4,12 @@ blinker==1.4
 certifi==2020.6.20
 chardet==3.0.4
 click==7.1.2
+dnspython==2.0.0
 docker==4.3.1
+email-validator==1.1.1
 Flask==1.1.2
 Flask-BabelEx==0.9.4
+Flask-JSGlue==0.3.1
 Flask-Login==0.5.0
 Flask-Mail==0.9.1
 Flask-Principal==0.4.0

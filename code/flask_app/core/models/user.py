@@ -19,7 +19,7 @@ class User(db.Model, UserMixin):
   email = db.Column(db.String(255), unique=True)
   password = db.Column(db.String(255))
 
-  redeemed_flags = db.relationship("Flag",backref="redeemed_by")
+  redeemed_flags = db.relationship("Flag",backref=db.backref('redeemed_by'))
 
   vpn_crt = db.Column(db.String(2**16))
   vpn_key = db.Column(db.String(2**16))
