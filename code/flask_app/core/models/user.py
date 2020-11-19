@@ -45,6 +45,7 @@ class User(db.Model, UserMixin):
 
   def get_json(self):
     json = {
+      "id": self.id,
       "username":self.username,
       "email":self.email,
       "roles": [],

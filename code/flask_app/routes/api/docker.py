@@ -70,8 +70,8 @@ def start_network(id):
     assign_groups.append(Group.get_group_by_id(group_id))
 
   network = preset.create_network(
-    assign_users=assign_groups,
-    assign_groups=assign_users,
+    assign_users=assign_users,
+    assign_groups=assign_groups,
     name=netork_name
     )
   return network.get_json()

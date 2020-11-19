@@ -4,7 +4,7 @@ function regenVpnDataButton(){
   $icon = $("#regen_data_button_icon")
   $icon.replaceWith(loading_icon)
   $icon = $("#regen_data_button_icon")
-  regenVpnData((data)=>{
+  Api.regenVpnData((data)=>{
     $icon.replaceWith(done_icon)
   })
 

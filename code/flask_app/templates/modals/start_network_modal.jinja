@@ -3,24 +3,23 @@
     <div class="row mb-3">
       <div class="col">
         <label>Network Name:</label>
-        <input class="form-control" id="name" type="text"  placeholder="e.g. Nmap Training Environment" required>
+        <input class="form-control" id="{{preset.id}}_network_name" type="text"  placeholder="e.g. Nmap Training Environment" required>
       </div>
     </div>
     <div class="row mb-1">
       <div class="col">
         <label>Assign Users</label>
-        <select class="select_images_field" id="available_images" multiple></select> 
+        <select class="select_images_field assign_users" id="{{preset.id}}_assign_users" multiple></select> 
       </div>
       <div class="col">
         <label>Assign Groups</label>
-        <select class="select_images_field" id="selected_images" multiple></select> 
+        <select class="select_images_field assign_groups" id="{{preset.id}}_assign_groups" multiple></select> 
       </div>
     </div>
     <div class="row mt-2">
       <div class="col">
-        
-        <button id="submit" onclick="" data-dismiss="modal" class="btn btn-success">
-          <i class="fas fa-check mr-2"></i>Start
+        <button id="{{preset.id}}_start" onclick="StartNetwork.startNetwork({{preset.id}})" class="btn btn-success">
+          <i id="{{preset.id}}_icon" class="fas fa-check mr-2"></i>Start
         </button>
       </div>
     </div>

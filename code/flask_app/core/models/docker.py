@@ -281,7 +281,7 @@ class ContainerImage(db.Model):
 
   def does_exist(self):
     existing = {}
-    existing = Container_Image.get_available_container_images()
+    existing = ContainerImage.get_available_container_images()
     if self.name not in existing.keys():
       return False
     return True
@@ -343,6 +343,7 @@ class NetworkPreset(db.Model):
     for user in assign_users:
       if user not in users:
         users.append(user)
+
     for group in assign_groups:
       for user in group.users:
         if user not in users:
@@ -522,7 +523,7 @@ class Network(db.Model):
     
     db.session.commit()
 
-    return network
+    return network_db
 
   @staticmethod
   def cleanup():

@@ -1,16 +1,17 @@
-function submitData(){
+class ManageGroups{
+  static submitData(){
 
-  let name = $("#group_name").val()
-
-  createGroup(name,()=>{
-    alert("Group created")
-  })
-}
-
-function deleteGroupButton(id){
-  deleteGroup(id,(data)=>{
-    console.log("deleted")
-    $(`#group_${id}`).hide()  // Dont remove it, because the changing of the dom structure breaks the 
-                              // confirmation modal              
-  })
+    let name = $("#group_name").val()
+  
+    Api.createGroup(name,()=>{
+      alert("Group created")
+    })
+  }
+  
+  static deleteGroup(id){
+    Api.deleteGroup(id,(data)=>{
+      $(`#group_${id}`).hide()  // Dont remove it, because the changing of the dom structure breaks the 
+                                // confirmation modal              
+    })
+  }
 }

@@ -79,7 +79,7 @@
                     <p>Do you really want to delete {{preset.name}}?</p>
                   </div>
                   <div class="modal-footer">
-                    <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="deleteNetworkPresetButton('{{preset.id}}')">Yes</button>
+                    <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="ManagePreset.deleteNetworkPreset('{{preset.id}}')">Yes</button>
                     <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
                   </div>
                 {% endcall %}
@@ -100,6 +100,5 @@
 
 {% block javascripts%}
 {{super()}}
-<script src="{{ url_for('static',filename='js/networkPresetList.js')}}"></script>
-<script src="{{url_for('static', filename='js/createNetworkPreset.js')}}"></script>
+<script src="{{ url_for('static',filename='js/manageNetworks.js')}}"></script>
 {% endblock %}
