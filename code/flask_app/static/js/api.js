@@ -57,7 +57,7 @@ class Api{
   
   static redeemFlag(flag,callback){
     let api_route = Flask.url_for("docker_api.redeem_flag")
-    data = {"flag":flag}
+    let data = {"flag":flag}
     Api.postDataAsJson(api_route,data,callback)
   }
   

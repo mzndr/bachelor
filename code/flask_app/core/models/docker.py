@@ -7,6 +7,8 @@ import uuid
 from distutils.dir_util import copy_tree
 
 from flask import current_app
+from flask_app.core import utils
+from flask_app.core.exceptions import docker as errors
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
@@ -122,7 +124,10 @@ class Container(db.Model):
     
     # generate random name with network name as prefix
     container_name = f"{current_app.config['APP_PREFIX']}_{network.name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
-    
+    if not utils.is_valid_docker_name(container_name):
+      raise errors.InvalidContainerNameException(container_name)
+
+
     container_db = Container(
       name=container_name,
       files_location=data_path,
@@ -333,9 +338,14 @@ class NetworkPreset(db.Model):
   def create_network(self,assign_users,assign_groups,name=None):
     """Creates a network from the preset"""
     container_image_names = []
+
+    if not utils.is_valid_docker_name(name):
+      raise errors.InvalidNetworkNameException(name)
+
+
     for image in self.container_images:
       if not image.does_exist():
-        raise ValueError(f"Container image '{image_name}' does not exist on disk. If its there, check if there is a dockerfile in its root directory.")
+        raise errors.ImageNotFoundException(image_name)
       container_image_names.append(image.name)
 
     users = []
@@ -349,8 +359,10 @@ class NetworkPreset(db.Model):
         if user not in users:
           users.append(user)
 
+
+
     network = Network.create_network(
-      network_name= name or self.name,
+      network_name= self.name,
       container_image_names=container_image_names,
       assign_users=users
     )
@@ -375,7 +387,8 @@ class NetworkPreset(db.Model):
     available_images = ContainerImage.get_available_container_images()
     for image_name in container_image_names:
       if image_name not in available_images:
-        raise ValueError(f"Container image '{image_name}' does not exist on disk. If its there, check if there is a dockerfile in its root directory.")
+        raise errors.ImageNotFoundException(image_name)
+      
       image = ContainerImage(name=image_name)
       db.session.add(image)
       container_images.append(image)
@@ -495,6 +508,10 @@ class Network(db.Model):
 
   @staticmethod
   def create_network(network_name,container_image_names,assign_users = [], assign_groups = []):
+    
+    if not utils.is_valid_docker_name(network_name):
+      raise errors.InvalidNetworkNameException(network_name)
+    
     network = docker_client.networks.create(
         name=network_name,
         check_duplicate=True,
@@ -567,6 +584,6 @@ class Flag(db.Model):
 
   @staticmethod
   def get_flag_by_code(code):
-    code = code.replace("FLAG{","").replace("}")
+    code = code.replace("FLAG{","").replace("}","")
     return Flag.query.filter_by(code=code).first()
 
