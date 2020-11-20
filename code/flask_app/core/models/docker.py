@@ -179,6 +179,10 @@ class Container(db.Model):
     for user in network.assigned_users:
       crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
       key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
+
+      if user.vpn_crt is None or user.vpn_key is None:
+        raise ValueError(f"Authentication data of user '{user.username}' is not existing.")
+
       with open(crt_location,"w") as crt_file:
         crt_file.write(user.vpn_crt)
       with open(key_location,"w") as key_file:
@@ -335,17 +339,18 @@ class NetworkPreset(db.Model):
     db.session.delete(self)
     db.session.commit()
 
-  def create_network(self,assign_users,assign_groups,name=None):
+  def create_network(self,assign_users,assign_groups,name):
     """Creates a network from the preset"""
-    container_image_names = []
-
     if not utils.is_valid_docker_name(name):
       raise errors.InvalidNetworkNameException(name)
 
+    if not Network.name_available(name):
+      raise errors.NetworkNameTakenException(name)
 
+    container_image_names = []
     for image in self.container_images:
       if not image.does_exist():
-        raise errors.ImageNotFoundException(image_name)
+        raise errors.ImageNotFoundException(image.name)
       container_image_names.append(image.name)
 
     users = []
@@ -362,7 +367,7 @@ class NetworkPreset(db.Model):
 
 
     network = Network.create_network(
-      network_name= self.name,
+      network_name= name,
       container_image_names=container_image_names,
       assign_users=users
     )
@@ -506,41 +511,57 @@ class Network(db.Model):
   def get_all_networks():
     return Network.query.all()
 
+  @staticmethod 
+  def name_available(name):
+    matching_network = Network.get_network_by_name(name)
+    return matching_network is None
+
   @staticmethod
   def create_network(network_name,container_image_names,assign_users = [], assign_groups = []):
     
     if not utils.is_valid_docker_name(network_name):
       raise errors.InvalidNetworkNameException(network_name)
-    
-    network = docker_client.networks.create(
+    network = None
+    try:
+      network = docker_client.networks.create(
+          name=network_name,
+          check_duplicate=True,
+          internal=False
+        )
+      network.reload()
+      gateway = network.attrs["IPAM"]["Config"][0]["Gateway"]
+      network_db = Network(
         name=network_name,
-        check_duplicate=True,
-        internal=False
+        gateway=gateway,
+        assigned_users=assign_users,
+        assigned_groups=assign_groups
       )
-    network.reload()
-    gateway = network.attrs["IPAM"]["Config"][0]["Gateway"]
-    network_db = Network(
-      name=network_name,
-      gateway=gateway,
-      assigned_users=assign_users,
-      assigned_groups=assign_groups
-    )
 
-    db.session.add(network_db)
-    db.session.flush()
+      db.session.add(network_db)
+      db.session.flush()
 
-    vpn_container = Container.create_vpn_container(network_db)
+      vpn_container = Container.create_vpn_container(network_db)
 
-    vpn_container_object = vpn_container.get_container_object()
-    network_db.vpn_port = vpn_container_object.ports['1194/udp'][0]['HostPort']
+      vpn_container_object = vpn_container.get_container_object()
+      network_db.vpn_port = vpn_container_object.ports['1194/udp'][0]['HostPort']
 
-    for container_folder in container_image_names:
-      Container.create_detatched_container(container_folder,network_db)
-    
-    
-    db.session.commit()
+      for container_folder in container_image_names:
+        Container.create_detatched_container(container_folder,network_db)
+      
+      
+      db.session.commit()
 
-    return network_db
+      return network_db
+    except Exception as err:
+      # If we fail somewhere during the creation process
+      # delete and remove everything that might already
+      # got created.
+      if network is not None:
+        for container in network.containers:
+          container.stop()
+        network.remove()
+
+      raise err
 
   @staticmethod
   def cleanup():
