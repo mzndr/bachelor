@@ -58,25 +58,24 @@ def create_app(test_config=None):
         from flask_security.utils import hash_password
 
         try:
-            test_user = User(
-                username=app.config['USERNAME'],
-                password=hash_password(app.config['PASSWORD']),
-                email='test@test.local',
-                active=True
-                )
-            test_user
-            test_user2 = User(
-                username=app.config['USERNAME'] + "2",
-                password=hash_password(app.config['PASSWORD']),
-                email='test@test2.local',
-                active=True
-                )
-            db.session.add(test_user)
-            db.session.add(test_user2)
-            db.session.commit()
-            test_user.gen_vpn_files()
-            test_user2.gen_vpn_files()
-        except:
+            admin_role = Role.create_role(
+                name="admin",
+                description="Privilidged role for administration purposes"
+            )
+            User.create_user(
+                username="admin",
+                password="123456",
+                email="admin@test.local",
+                roles=[admin_role]
+            )
+
+            User.create_user(
+                username="test_user",
+                password="123456",
+                email="test@test.local",
+                roles=[]
+            )
+        except Exception as err:
             pass
 
     # register blueprints

@@ -48,7 +48,8 @@ class ManagePreset{
     Api.deleteNetworkPreset(id,(data)=>{
       console.log("deleted")
       $(`#${id}`).hide() // Dont remove it, because the changing of the dom structure breaks the 
-                         // confirmation modal              
+                         // confirmation modal   
+      Messaging.createMessage("Preset deleted!","success")           
     })
   }
 }

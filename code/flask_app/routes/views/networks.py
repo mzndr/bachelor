@@ -10,6 +10,7 @@ networks_bp = Blueprint(
 
 @networks_bp.route('/manage_networks', methods=['GET'])
 @login_required
+@roles_required("admin")
 def manage_networks():
   networks = Network.get_all_networks()
   presets = NetworkPreset.query.all()

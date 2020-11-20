@@ -168,7 +168,6 @@ class Container(db.Model):
     network_id = network.id
     data_path = Container.create_container_dir(vpn_image)
     vpn_files = os.path.join(data_path,"data")
-    # Copy user authentication files into vpn
 
     users = network.assigned_users
     for group in network.assigned_groups:
@@ -176,12 +175,14 @@ class Container(db.Model):
         if user not in users:
           users.append(user)
 
+    # Copy user authentication files into vpn
     for user in network.assigned_users:
       crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
       key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
 
       if user.vpn_crt is None or user.vpn_key is None:
-        raise ValueError(f"Authentication data of user '{user.username}' is not existing.")
+        #raise ValueError(f"Authentication data of user '{user.username}' is not existing.")
+        user.gen_vpn_files()
 
       with open(crt_location,"w") as crt_file:
         crt_file.write(user.vpn_crt)

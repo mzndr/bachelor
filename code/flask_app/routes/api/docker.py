@@ -1,3 +1,4 @@
+from flask_user import roles_required
 from flask import Blueprint, current_app, jsonify, request
 from flask_security import current_user, login_required
 
@@ -13,12 +14,14 @@ docker_api_bp = Blueprint(
 
 @docker_api_bp.route('/containers', methods=['GET'])
 @login_required
+@roles_required("admin")
 def get_available_container_images():
   files = ContainerImage.get_available_container_images()
   return jsonify(files)
 
 @docker_api_bp.route('/createtest/<string:name>', methods=['GET'])
 @login_required
+@roles_required("admin")
 def create_test_network(name):
   test_user = User.get_user_by_username(current_app.config["USERNAME"])
   Network.create_network(
@@ -31,6 +34,7 @@ def create_test_network(name):
 
 @docker_api_bp.route('/networkpresets/create', methods=['POST'])
 @login_required
+@roles_required("admin")
 def create_network_preset():
   try:
     json_data = request.get_json()
@@ -46,6 +50,7 @@ def create_network_preset():
 
 @docker_api_bp.route('/networkpresets/<int:id>/delete', methods=['DELETE'])
 @login_required
+@roles_required("admin")
 def delete_network_preset(id):
   preset = NetworkPreset.get_network_preset_by_id(id)
   json = preset.get_json()
@@ -55,6 +60,7 @@ def delete_network_preset(id):
 
 @docker_api_bp.route('/networkpresets/<int:id>/start', methods=['POST'])
 @login_required
+@roles_required("admin")
 def start_network(id):
   try:
     preset = NetworkPreset.get_network_preset_by_id(id)
@@ -81,17 +87,21 @@ def start_network(id):
 
 @docker_api_bp.route('/networks/<string:name>', methods=['GET'])
 @login_required
+@roles_required("admin")
 def get_network_by_name(name):
   network = Network.get_network_by_name(name)
   return network.get_json()
 
 @docker_api_bp.route('/networks/<string:name>/vpndata', methods=['GET'])
 @login_required
+@roles_required("admin")
 def get_network_vpn_data(name):
   network = Network.get_network_by_name(name)
   return jsonify(network.get_connection_command(current_user))
 
 @docker_api_bp.route('/networks/<string:name>/delete', methods=['DELETE'])
+@login_required
+@roles_required("admin")
 def delete_network(name):
   network = Network.get_network_by_name(name)
   json = network.get_json()
@@ -100,6 +110,7 @@ def delete_network(name):
 
 @docker_api_bp.route('/networks/', methods=['GET'])
 @login_required
+@roles_required("admin")
 def get_all_networks():
   networks = Network.get_all_networks()
   json = []

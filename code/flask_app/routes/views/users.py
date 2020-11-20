@@ -1,3 +1,4 @@
+from flask_user import role_required
 from flask import Blueprint, render_template
 from flask_app.core.models.user import Group, Role, User
 from flask_security import current_user, login_required
@@ -9,6 +10,7 @@ users_bp = Blueprint(
 
 @users_bp.route('/manage_users', methods=['GET'])
 @login_required
+@roles_required("admin")
 def manage_users():
   users = User.get_all_users()
   groups = Group.get_all_groups()

@@ -29,16 +29,8 @@
   <div class="content-wrapper bg-dark mt-5 mr-5">
     <div class="ml-5">
       <div class="content-header">
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <ul class=flashes>
-            {% for category, message in messages %}
-              <li class="{{ category }}">{{ message }}</li>
-            {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
+        <div id="messages" class=messages>
+        </div>
 
         {% block content_header %}<h1>{{title}}</h1>{% endblock content_header %}
       </div>

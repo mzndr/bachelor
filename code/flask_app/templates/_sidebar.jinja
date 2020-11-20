@@ -32,6 +32,7 @@
 
           
           <!-- Admin Locations -->
+          {% if current_user.has_role("admin") %}
           <li class="nav-item">
             <a href="{{url_for('users.manage_users')}}" class="nav-link">
               <i class="nav-icon fas fa-users-cog"></i>
@@ -44,6 +45,7 @@
               <p>Manage Networks</p>
             </a>
           </li>
+          {% endif %}
         </ul>
       </nav>
       <!-- /.sidebar-menu -->

@@ -37,6 +37,12 @@ select{
   width: 1400px;
 }
 
+.messages div{
+  padding-top: 15px;
+  padding-bottom: 15px;
+  height: auto;
+}
+
 code {
   color: crimson;
   background-color: #343a40;

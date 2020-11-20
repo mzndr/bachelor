@@ -1,5 +1,7 @@
 import uuid
 
+from flask_security.utils import hash_password
+
 from flask_security import RoleMixin, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 
@@ -55,8 +57,21 @@ class User(db.Model, UserMixin):
     return json
 
   @staticmethod
-  def create_user():
-    pass
+  def create_user(username,password,email,roles=[]):
+    user =  User(
+      username=username,
+      password=hash_password(password),
+      email=email,
+      active=True,
+      roles=roles
+      )
+    
+    db.session.add(user)
+    db.session.commit()
+    user.gen_vpn_files()
+
+    return user
+
 
   @staticmethod
   def get_all_users():
@@ -81,6 +96,17 @@ class Role(db.Model, RoleMixin):
       "description":self.description,
     }
     return json
+
+  @staticmethod
+  def create_role(name,description):
+    role = Role(
+      name=name,
+      description=description
+    )
+
+    db.session.add(role)
+    db.session.commit()
+    return role
 
 class Group(db.Model):
   id = db.Column(db.Integer, primary_key=True)
