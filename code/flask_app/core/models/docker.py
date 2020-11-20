@@ -5,8 +5,7 @@ import shutil
 import tempfile
 import uuid
 from distutils.dir_util import copy_tree
-
-from flask import current_app
+from flask import current_app, abort
 from flask_app.core import utils
 from flask_app.core.exceptions import docker as errors
 from flask_sqlalchemy import SQLAlchemy
@@ -126,8 +125,6 @@ class Container(db.Model):
     container_name = f"{current_app.config['APP_PREFIX']}_{network.name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
     if not utils.is_valid_docker_name(container_name):
       raise errors.InvalidContainerNameException(container_name)
-
-
     container_db = Container(
       name=container_name,
       files_location=data_path,
@@ -444,6 +441,8 @@ class Network(db.Model):
 
     return json
 
+  def user_allowed_to_access(self,user):
+    return user in self.assigned_users or user.group in self.assign_groups
 
   def get_flag(self,regex_match):
     """Gets a flag if it exists, or creates it and returns it if not"""
@@ -506,7 +505,10 @@ class Network(db.Model):
 
   @staticmethod
   def get_network_by_id(id):
-    return Network.query.get(id)
+    network = Network.query.get(id)
+
+
+    return network    
 
   @staticmethod
   def get_all_networks():

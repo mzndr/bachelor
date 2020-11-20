@@ -69,6 +69,11 @@ def create_app(test_config=None):
                 roles=[admin_role]
             )
 
+            NetworkPreset.create_network_preset(
+                name="Tutorial",
+                container_image_names=["apache_tutorial"]
+            )
+
             User.create_user(
                 username="test_user",
                 password="123456",

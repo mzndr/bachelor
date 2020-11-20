@@ -5,18 +5,7 @@
       <div class="row">
           <div class="col">
             <div class="d-flex justify-content-center">
-              <div class="small-box bg-primary flag-input">
-                <div class="inner">
-                  <h4>Submit a Flag</h4>
-                  <input class="form-control" id="submit_flag_text" type="text" placeholder="FLAG{xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}" style="width:100%;">
-                </div>
-                <div class="icon">
-                  <i class="fas fa-flag"></i>
-                </div>
-                <a href="#" onclick="submitFlag()" class="small-box-footer">
-                  Submit <i class="fas fa-check"></i>
-                </a>
-              </div>
+              {% include "flag_form.jinja" %}
             </div>
           </div>
         </div>
@@ -37,11 +26,17 @@
           <tbody>
             {% for network in current_user.assigned_networks %}
             <tr>
-              <td>{{ network.name }}</td>
+              <td>{{ network.name }}</a></td>
               <td>{{ network.gateway }}</td>
               <td>{{ network.get_redeemed_flags().__len__() }}/{{ network.get_flags().__len__() }}</td>
               <td><code>{{ network.get_connection_command(current_user) }}</code></td>
-              <td><button class="btn btn-warning control-button"><i class="fas fa-redo-alt"></i></button></td>
+              <td>
+                <button class="btn btn-primary" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">
+                  <i class="fas fa-info-circle mr-1"></i>
+                  Details
+                </button>
+                <button class="btn btn-warning control-button"><i class="fas fa-redo-alt"></i></button>
+                </td>
             </tr>
             {% else %}
             <tr>

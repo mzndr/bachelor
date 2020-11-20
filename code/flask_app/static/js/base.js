@@ -7,9 +7,7 @@ class Messaging{
     $(button).parent().fadeOut()
   }
   
-  static createMessage(message,type=""){
-    let $messages_div = $("#messages")
-  
+  static getMessageDiv(message,type){
     let bg = ""
   
     switch (type) {
@@ -31,14 +29,23 @@ class Messaging{
     <button type="button" onclick="Messaging.closeMessage(this)" class="close" aria-label="Close">
       <span aria-hidden="true">×</span>
     </button>
-    <span>${message}</span>
-  </div>`
+      <span>${message}</span>
+    </div>`
   
-  let $message_div = $(message_div_html).hide()
-  $messages_div.append($message_div)
-  $message_div.fadeIn()
-  
+    let $message_div = $(message_div_html).hide()
+    return $message_div
   }
+  static createMessage(message,type=""){
+    let $messages_div = $("#messages")
+    let $message_div = Messaging.getMessageDiv(message,type)
+    $messages_div.append($message_div)
+    $message_div.fadeIn()
+  }
+
+  static createTemporalMessage(message,type=""){
+
+  }
+
 }
 
 function placeCopyButtons(){
@@ -63,4 +70,27 @@ function copyToClipborad(text){
   document.execCommand("copy");
   $tmpTextarea.remove()
 
+}
+
+
+function submitFlag(){
+  let flag = $("#submit_flag_text").val()
+  $("#submit_flag_text").val("")
+  Api.redeemFlag(flag,(response)=>{
+    let message = response.responseJSON["status"]
+    let status = response.status 
+
+    switch (status) {
+      case 404:
+        Messaging.createMessage(message,"error")
+        break;
+      case 410:
+        Messaging.createMessage(message,"warning")
+          break;
+      case 200:
+        Messaging.createMessage(message,"success")
+        break;
+    }
+
+  })
 }

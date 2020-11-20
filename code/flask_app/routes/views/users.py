@@ -1,4 +1,4 @@
-from flask_user import role_required
+from flask_security.decorators import roles_required
 from flask import Blueprint, render_template
 from flask_app.core.models.user import Group, Role, User
 from flask_security import current_user, login_required

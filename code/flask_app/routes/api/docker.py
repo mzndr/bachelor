@@ -1,4 +1,4 @@
-from flask_user import roles_required
+from flask_security.decorators import roles_required
 from flask import Blueprint, current_app, jsonify, request
 from flask_security import current_user, login_required
 
@@ -129,9 +129,9 @@ def redeem_flag():
   flag = Flag.get_flag_by_code(flag_code)
   for network in current_user.assigned_networks:
     if flag in network.get_redeemed_flags():
-      return {"stauts":"flag already redeemed!"},410
+      return {"status":"flag already redeemed!"},410
     if flag in network.get_unredeemed_flags():
       flag.redeem(current_user)
-      return {"stauts":"flag successfully redeemed!"},200
+      return {"status":"flag successfully redeemed!"},200
   
-  return {"stauts":"invalid flag, flag not found!"},404
+  return {"status":"invalid flag, flag not found!"},404
