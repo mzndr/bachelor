@@ -10,6 +10,31 @@
         </div>
       </div>
       <!-- /row -->
+
+      <div class="row">
+          <div class="col">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Unredeemed Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for flag in network.get_unredeemed_flags() %}
+              <tr>
+                <td>{{ flag.get_description() }}</a></td>
+              </tr>
+              {% else %}
+              <tr>
+                <td>There are no running networks</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>           
+          </div>
+        </div>
+      </div>
+      <!-- /row -->
   </div>
   <!-- /container-fluid -->
 {%endblock content %}
