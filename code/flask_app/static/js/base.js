@@ -25,10 +25,11 @@ class Messaging{
         break;
     }
   
-    let message_div_html = `<div class="jumbotron ${bg} elevation-1 mb-3">
-    <button type="button" onclick="Messaging.closeMessage(this)" class="close" aria-label="Close">
-      <span aria-hidden="true">×</span>
-    </button>
+    let message_div_html = 
+    `<div class="jumbotron ${bg} elevation-1 mb-3">
+      <button type="button" onclick="Messaging.closeMessage(this)" class="close" aria-label="Close">
+        <span aria-hidden="true">×</span>
+      </button>
       <span>${message}</span>
     </div>`
   
@@ -40,6 +41,20 @@ class Messaging{
     let $message_div = Messaging.getMessageDiv(message,type)
     $messages_div.append($message_div)
     $message_div.fadeIn()
+  }
+
+  static apiResponseToMessage(response){
+    let status = response.status
+    let messageType = ""
+    let message = response.responseText
+    switch (status) {
+      case 200:
+        messageType = "success"
+      default:
+        messageType = "error"
+        break;
+    }
+    Messaging.createMessage(message,messageType)
   }
 
   static createTemporalMessage(message,type=""){

@@ -7,12 +7,12 @@
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="info">
           <a href="#" class="ml-1">{{current_user.username}}</a>
-          {% call macros.create_modal_button("download_cfg", class="btn btn-primary d-inline ml-2") %}
+          {% call macros.create_modal_button("download_cfg", class="btn btn-primary btn-xs d-inline ml-2") %}
             <i class="fas fa-user-cog"></i>
             <i class="fas fa-download"></i>
           {% endcall %}
           
-          {% call macros.create_modal_button("regen_auth", class="btn btn-warning d-inline ml-2") %}
+          {% call macros.create_modal_button("regen_auth", class="btn btn-warning btn-xs d-inline ml-2") %}
             <i class="fas fa-key"></i>
             <i class="fas fa-sync-alt"></i>
           {% endcall %}

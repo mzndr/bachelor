@@ -22,24 +22,25 @@
 </head>
 
 <body class="bg-dark">
+  <div class="wrapper">
+    {% include '_navbar.jinja' %}
+    {% include '_sidebar.jinja' %}
 
+    <!-- Main content -->
+    <div class="content-wrapper bg-dark mt-5 mr-5">
+      <div class="ml-5">
+        <div class="content-header">
+          <div id="messages" class=messages>
+          </div>
 
-  {% include '_sidebar.jinja' %}
-  <!-- Main content -->
-  <div class="content-wrapper bg-dark mt-5 mr-5">
-    <div class="ml-5">
-      <div class="content-header">
-        <div id="messages" class=messages>
+          {% block content_header %}<h1>{{title}}</h1>{% endblock content_header %}
         </div>
-
-        {% block content_header %}<h1>{{title}}</h1>{% endblock content_header %}
-      </div>
-      <div class="content mt-5">
-        {% block content %}{% endblock content %}
+        <div class="content mt-5">
+          {% block content %}{% endblock content %}
+        </div>
       </div>
     </div>
   </div>
-
   {% block javascripts %}
   <!-- Bootstrap -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

@@ -21,8 +21,8 @@ select{
 .create-network-preset .add-remove-button{
   width:500px;
 }
-.create-network-preset #name{
-  width:900px;
+.create-network-preset input[type=text]{
+  width:95%;
 }
 
 .create-network-preset-modal{
@@ -55,6 +55,8 @@ code {
   padding-bottom: 7px;
   border-radius: 5px;
 }
+
+
 
 .modal-header {
   border-top-left-radius: 3px;

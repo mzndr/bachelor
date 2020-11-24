@@ -45,7 +45,7 @@ class CreatePreset{
 
 class ManagePreset{
   static deleteNetworkPreset(id){
-    Api.deleteNetworkPreset(id,(data)=>{
+    Api.deleteNetworkPreset(id,(response)=>{
       console.log("deleted")
       $(`#${id}`).hide() // Dont remove it, because the changing of the dom structure breaks the 
                          // confirmation modal   
@@ -82,12 +82,12 @@ class StartNetwork{
 
   }
 
-  static startNetwork(id){
+  static startNetwork(id,modal_id){
     let loading_icon = "<div class='spinner-border mr-2' role='status'></div>"
     let $name = $(`#${id}_network_name`)
     let $usersField = $(`#${id}_assign_users`)
     let $groupsField = $(`#${id}_assign_groups`)
-
+    let $modal = $(`${modal_id}`)
     let name = $name.val()
     let userIds = $usersField.val()
     let groupIds = $groupsField.val()
@@ -98,8 +98,9 @@ class StartNetwork{
       name,
       groupIds,
       userIds,
-      (data)=>{
-        location.reload();
+      (response)=>{
+        $("#modalstart_1").modal('hide')
+        Messaging.apiResponseToMessage(response)
       }
     )
     
