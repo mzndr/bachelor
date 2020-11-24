@@ -1,14 +1,12 @@
 import uuid
 
-from flask_security.utils import hash_password
-
+from flask_app.core.db import db
+from flask_app.core.models.docker import Container, Network
 from flask_security import RoleMixin, UserMixin
+from flask_security.utils import hash_password
 from flask_sqlalchemy import SQLAlchemy
 
 import docker
-
-from ..db import db
-from ..models.docker import Container, Network
 
 roles_users = db.Table('roles_users',
         db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -56,6 +54,8 @@ class User(db.Model, UserMixin):
       json["roles"].append(role.get_json())
     return json
 
+
+
   @staticmethod
   def create_user(username,password,email,roles=[]):
     user =  User(
@@ -71,6 +71,7 @@ class User(db.Model, UserMixin):
     user.gen_vpn_files()
 
     return user
+
 
 
   @staticmethod
@@ -96,6 +97,17 @@ class Role(db.Model, RoleMixin):
       "description":self.description,
     }
     return json
+
+  def get_users(self):
+    return self.users
+
+  @staticmethod
+  def get_admin_users():
+    return Role.get_roll_by_name("admin").get_users()
+
+  @staticmethod
+  def get_roll_by_name(name):
+    return Role.query.filter_by(name=name).first()
 
   @staticmethod
   def create_role(name,description):

@@ -16,6 +16,14 @@ import docker
 
 from ..db import db
 
+### Constants ###
+CONTAINER_STATE_RUNNING = "running"
+CONTAINER_STATE_RESTARTING = "restarting"
+CONTAINER_STATE_PAUSED = "paused"
+CONTAINER_STATE_EXITED = "exited"
+CONTAINER_STATE_DEAD = "dead"
+
+
 ### Helper Tables ###
 network_users = db.Table('network_users',
         db.Column('user_id',    db.Integer(), db.ForeignKey('user.id')),
@@ -35,6 +43,12 @@ class Container(db.Model):
   network_id = db.Column(db.Integer, db.ForeignKey('network.id'))
   ip = db.Column(db.String(16))
   flags = db.relationship("Flag",backref="container")
+
+
+
+
+  def get_status(self):
+    return str(self.get_container_object().status)
 
   def read_properties(self):
     path = os.path.join(self.files_location,"properties.json")
@@ -64,7 +78,8 @@ class Container(db.Model):
       "docker_id": self.docker_id,
       "network_id": self.network_id,
       "files_location": self.files_location,
-      "properties": self.read_properties()
+      "properties": self.read_properties(),
+      "status": self.get_status()
     }
     return json
 
@@ -172,6 +187,7 @@ class Container(db.Model):
   
   @staticmethod
   def create_vpn_container(network):
+    from flask_app.core.models.user import Role
     """Creates the vpn container for the specified network"""
     vpn_image = "vpn"
     network_name = network.name
@@ -179,14 +195,18 @@ class Container(db.Model):
     data_path = Container.create_container_dir(vpn_image)
     vpn_files = os.path.join(data_path,"data")
 
-    users = network.assigned_users
+    users = network.assigned_users # Grant assigned users access
+
+    # Grant users of assigned groups access
     for group in network.assigned_groups:
       for user in group.users:
         if user not in users:
           users.append(user)
+    
+    users.extend(Role.get_admin_users()) # Also grant admins access
 
     # Copy user authentication files into vpn
-    for user in network.assigned_users:
+    for user in users:
       crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
       key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
 
@@ -208,9 +228,6 @@ class Container(db.Model):
       cap_add="NET_ADMIN",
       privileged=True,
       )
-
-
-
 
     return vpn_container
 
@@ -436,10 +453,18 @@ class Network(db.Model):
                         backref=db.backref('assigned_networks', lazy='dynamic')
                         )
   
+  def is_network_ready(self):
+    """Checks if all containers are running"""
+    for container in self.containers:
+      if container.get_status() != CONTAINER_STATE_RUNNING:
+        return False
+    return True
+
   def get_json(self):
     json = {
       "id": self.id,
       "name": self.name,
+      "ready": self.is_network_ready(),
       "gateway": self.gateway,
       "vpn_port": self.vpn_port,
       "assigned_users": [],
