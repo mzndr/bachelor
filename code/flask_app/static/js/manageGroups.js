@@ -4,7 +4,7 @@ class ManageGroups{
     let name = $("#group_name").val()
   
     Api.createGroup(name,()=>{
-      alert("Group created")
+      location.reload()
     })
   }
   
