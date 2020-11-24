@@ -30,7 +30,14 @@
             </a>
           </li>
 
-          
+          <li class="nav-item">
+            <a href="{{url_for('index.getting_started')}}" class="nav-link">
+              <i class="nav-icon fas fa-hands-helping"></i>
+              <p>Getting Started</p>
+            </a>
+          </li>
+
+
           <!-- Admin Locations -->
           {% if current_user.has_role("admin") %}
           <li class="nav-item">

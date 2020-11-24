@@ -68,6 +68,10 @@ class Container(db.Model):
     }
     return json
 
+  def restart(self):
+    container = self.get_container_object()
+    container.restart()
+
   def get_container_object(self):
     """Returns the container object of the docker sdk"""
     container_object = docker_client.containers.get(self.name)
@@ -449,6 +453,10 @@ class Network(db.Model):
       json["containers"].append(container.get_json())
 
     return json
+
+  def restart(self):
+    for container in self.containers:
+      container.restart()
 
   def user_allowed_to_access(self,user):
     return user in self.assigned_users or user.group in self.assign_groups

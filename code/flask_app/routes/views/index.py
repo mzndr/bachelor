@@ -13,3 +13,12 @@ def index():
     "dashboard.jinja",
     title="index"
     )
+
+
+@index_bp.route('/getting_started', methods=['GET'])
+@login_required
+def getting_started():
+  return render_template(
+    "getting_started.jinja",
+    title="Getting Started"
+    )
