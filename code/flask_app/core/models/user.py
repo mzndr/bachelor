@@ -54,8 +54,6 @@ class User(db.Model, UserMixin):
       json["roles"].append(role.get_json())
     return json
 
-
-
   @staticmethod
   def create_user(username,password,email,roles=[]):
     user =  User(
@@ -71,8 +69,6 @@ class User(db.Model, UserMixin):
     user.gen_vpn_files()
 
     return user
-
-
 
   @staticmethod
   def get_all_users():

@@ -26,7 +26,7 @@ CONTAINER_STATE_DEAD = "dead"
 
 ### Helper Tables ###
 network_users = db.Table('network_users',
-        db.Column('user_id',    db.Integer(), db.ForeignKey('user.id')),
+        db.Column('user_id',    db.Integer(), db.ForeignKey('user.id'), unique=True),
         db.Column('network_id', db.Integer(), db.ForeignKey('network.id')))
 
 network_groups = db.Table('network_groups',
@@ -195,24 +195,20 @@ class Container(db.Model):
     data_path = Container.create_container_dir(vpn_image)
     vpn_files = os.path.join(data_path,"data")
 
-    users = network.assigned_users # Grant assigned users access
+    users = network.assigned_users.copy() # Grant assigned users access
 
     # Grant users of assigned groups access
     for group in network.assigned_groups:
-      for user in group.users:
-        if user not in users:
-          users.append(user)
+      users.extend(group.users)
     
     users.extend(Role.get_admin_users()) # Also grant admins access
+
+    users = utils.remove_duplicates_from_list(users)
 
     # Copy user authentication files into vpn
     for user in users:
       crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
       key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
-
-      #if user.vpn_crt is None or user.vpn_key is None:
-      #  #raise ValueError(f"Authentication data of user '{user.username}' is not existing.")
-      #  user.gen_vpn_files()
 
       with open(crt_location,"w") as crt_file:
         crt_file.write(user.vpn_crt)
@@ -381,23 +377,22 @@ class NetworkPreset(db.Model):
         raise errors.ImageNotFoundException(image.name)
       container_image_names.append(image.name)
 
-    users = []
 
-    for user in assign_users:
-      if user not in users:
-        users.append(user)
 
+    assign_users = utils.remove_duplicates_from_list(assign_users)
+    assign_groups = utils.remove_duplicates_from_list(assign_groups)
+
+    # remove assigned users that are already in a group that is assigned,
     for group in assign_groups:
-      for user in group.users:
-        if user not in users:
-          users.append(user)
-
-
+      for user in assign_users:
+        if user in group.users:
+          assign_users.remove(user)
 
     network = Network.create_network(
       network_name= name,
       container_image_names=container_image_names,
-      assign_users=users
+      assign_users=assign_users,
+      assign_groups=assign_groups
     )
 
 
@@ -574,6 +569,9 @@ class Network(db.Model):
         )
       network.reload()
       gateway = network.attrs["IPAM"]["Config"][0]["Gateway"]
+      assign_users = utils.remove_duplicates_from_list(assign_users)
+      assign_groups = utils.remove_duplicates_from_list(assign_groups)
+
       network_db = Network(
         name=network_name,
         gateway=gateway,
@@ -600,13 +598,13 @@ class Network(db.Model):
       # If we fail somewhere during the creation process
       # delete and remove everything that might already
       # got created.
-     
+      current_app.logger.error(str(err))
       if network is not None:
         network.reload()
         for container in network.containers:
           container.stop()
-        network.remove()
-
+          network.remove()
+    
       raise err
 
   @staticmethod

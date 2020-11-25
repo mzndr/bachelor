@@ -7,3 +7,5 @@ def is_valid_docker_name(name):
     return True
   return False
 
+def remove_duplicates_from_list(_list):
+  return list(dict.fromkeys(_list))

@@ -100,7 +100,13 @@ class StartNetwork{
       userIds,
       (response)=>{
         $("#modalstart_1").modal('hide')
-        Messaging.apiResponseToMessage(response)
+        console.log(response)
+        if (response.status != 200){
+          Messaging.apiResponseToMessage(response)
+        }else{
+          Messaging.createMessage("Network created!","success")
+          console.log(response)
+        }
       }
     )
     
