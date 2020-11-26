@@ -2,6 +2,13 @@
     <div class="inner">
         <h4>Submit a Flag</h4>
         <input class="form-control" id="submit_flag_text" type="text" placeholder="FLAG{xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}" style="width:100%;">
+        <div class="progress mt-3">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{current_user.get_total_completion_percentage()}}%;" aria-valuenow="{{current_user.get_total_completion_percentage()}}" aria-valuemin="0" aria-valuemax="100">
+                  </div>
+                  <h5 class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
+                    {{current_user.get_total_completion_percentage() | round(1) }}% of all flags redeemed!
+                  </h5>
+        </div>
     </div>
     <div class="icon">
         <i class="fas fa-flag"></i>

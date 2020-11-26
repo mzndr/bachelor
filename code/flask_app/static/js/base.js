@@ -1,8 +1,21 @@
 $(document).ready(function(){
   placeCopyButtons()
+  Messaging.messageFromUrlParam()
 })
 
 class Messaging{
+
+
+  static messageFromUrlParam(){
+    let searchParams = new URLSearchParams(window.location.search)
+    if (searchParams.has('message')){
+      let message = JSON.parse(searchParams.get('message'))
+      let type = Object.keys(message)[0]
+      let text = message[type]
+      Messaging.createMessage(text,type)
+    }
+  }
+
   static closeMessage(button){
     $(button).parent().fadeOut()
   }
@@ -92,9 +105,9 @@ function submitFlag(){
   let flag = $("#submit_flag_text").val()
   $("#submit_flag_text").val("")
   Api.redeemFlag(flag,(response)=>{
-    let message = response.responseJSON["status"]
-    let status = response.status 
-
+    console.log(response)
+    let status = response.status
+    let message = response.responseJSON.status
     switch (status) {
       case 404:
         Messaging.createMessage(message,"error")
@@ -102,7 +115,7 @@ function submitFlag(){
       case 410:
         Messaging.createMessage(message,"warning")
           break;
-      case 200:
+      case 1337:
         Messaging.createMessage(message,"success")
         break;
     }

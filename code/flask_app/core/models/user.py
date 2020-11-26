@@ -1,5 +1,6 @@
 import uuid
 
+from flask import url_for
 from flask_app.core.db import db
 from flask_app.core.models.docker import Container, Network
 from flask_security import RoleMixin, UserMixin
@@ -33,7 +34,25 @@ class User(db.Model, UserMixin):
 
   group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
 
-    
+  def get_total_completion_percentage(self):
+    networks = self.get_assigned_networks()
+    completed = 0
+    total = 0
+    for network in networks:
+      completed = completed + network.get_completion_percent()
+    total = len(networks) * 100
+    percentage = (completed / total) * 100
+    return percentage
+
+  def get_assigned_networks(self):
+    networks = self.assigned_networks.all().copy()
+    networks.extend(self.group.assigned_networks)
+    return networks
+
+  def __str__(self):
+    if self.group is None:
+      return f"{self.username} (no group)"  
+    return f"{self.username} ({self.group.name})"  
 
   def gen_vpn_files(self):
     user_crt, user_key, user_cfg = Container.gen_vpn_crt_and_cfg(self)
@@ -120,7 +139,10 @@ class Group(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   invite_code = db.Column(db.String, unique=True)
   name = db.Column(db.String, unique=True)
-  users = db.relationship("User")
+  users = db.relationship("User",backref="group")
+
+  def __str__(self):
+    return f"{self.id} {self.name}"
 
   def assign_users(self, users):
     for user in users:
@@ -134,8 +156,6 @@ class Group(db.Model):
       if user in users:
         self.users.remove(user)
 
-    if len(self.users) <= 0:
-      self.delete()
 
     db.session.add(self)
     db.session.commit()
@@ -148,13 +168,17 @@ class Group(db.Model):
     json = {
       "id":self.id,
       "name":self.name,
-      "users":[]
+      "code":self.invite_code,
+      "users":[],
     }
 
     for user in self.users:
       json["users"].append(user.get_json())
 
     return json
+
+  def get_invite_url(self):
+    return url_for('users.group_invite',code=self.invite_code, _external=True)
 
   @staticmethod
   def create_group(name,assign_users):

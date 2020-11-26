@@ -59,7 +59,7 @@
                 None.
                 {% endfor %}
               </td>
-              <td><code>{{ url_for('users.group_invite',code=group.invite_code, _external=True) }}</code></td>
+              <td><code>{{ group.get_invite_url() }}</code></td>
               <td>
                 <!-- Delete preset button -->
                 {% call macros.create_modal_button("_group_" + group.id.__str__(), class="btn btn-danger control-button float-left") %}

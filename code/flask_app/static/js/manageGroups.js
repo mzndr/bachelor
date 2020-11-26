@@ -3,7 +3,7 @@ class ManageGroups{
 
     let name = $("#group_name").val()
   
-    Api.createGroup(name,()=>{
+    Api.createGroup(name,(response)=>{
       location.reload()
     })
   }
@@ -11,7 +11,8 @@ class ManageGroups{
   static deleteGroup(id){
     Api.deleteGroup(id,(data)=>{
       $(`#group_${id}`).hide()  // Dont remove it, because the changing of the dom structure breaks the 
-                                // confirmation modal              
+                                // confirmation modal 
+      Messaging.createMessage("Group deleted!","success")
     })
   }
 }

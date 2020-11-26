@@ -26,7 +26,7 @@ CONTAINER_STATE_DEAD = "dead"
 
 ### Helper Tables ###
 network_users = db.Table('network_users',
-        db.Column('user_id',    db.Integer(), db.ForeignKey('user.id'), unique=True),
+        db.Column('user_id',    db.Integer(), db.ForeignKey('user.id')),
         db.Column('network_id', db.Integer(), db.ForeignKey('network.id')))
 
 network_groups = db.Table('network_groups',
@@ -448,6 +448,13 @@ class Network(db.Model):
                         backref=db.backref('assigned_networks', lazy='dynamic')
                         )
   
+  def get_completion_percent(self):
+    total_flags = len(self.get_flags())
+    completed = len(self.get_redeemed_flags())
+    percentage = (completed / total_flags) * 100
+    return percentage
+
+
   def is_network_ready(self):
     """Checks if all containers are running"""
     for container in self.containers:
@@ -479,7 +486,7 @@ class Network(db.Model):
       container.restart()
 
   def user_allowed_to_access(self,user):
-    return user in self.assigned_users or user.group in self.assign_groups
+    return user in self.assigned_users or user.group in self.assigned_groups
 
   def get_flag(self,regex_match,container):
     """Gets a flag if it exists, or creates it and returns it if not"""
@@ -632,12 +639,12 @@ class Flag(db.Model):
     db.session.add(self)
     db.session.commit()
 
+
   def delete(self):
     db.session.delete(self)
     db.session.commit()
 
   def get_description(self):
-    print(self.container.read_properties())
     return self.container.read_properties()["flags"][self.name]["description"]
   
   def get_hints(self):

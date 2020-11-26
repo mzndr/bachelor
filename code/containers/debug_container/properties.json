@@ -1,0 +1,53 @@
+{
+  "description":"Simple apache container for the user to test their vpn connection",
+  "flags":{
+    "flag_1":{
+      "description":"[# flag_1 #]",
+      "hints":[""]
+    },
+    "flag_2":{
+      "description":"[# flag_2 #]",
+      "hints":[""]
+    },
+    "flag_3":{
+      "description":"[# flag_3 #]",
+      "hints":[""]
+    },
+    "flag_4":{
+      "description":"[# flag_4 #]",
+      "hints":[""]
+    },
+    "flag_5":{
+      "description":"[# flag_5 #]",
+      "hints":[""]
+    },
+    "flag_6":{
+      "description":"[# flag_6 #]",
+      "hints":[""]
+    },
+    "flag_7":{
+      "description":"[# flag_7 #]",
+      "hints":[""]
+    },
+    "flag_8":{
+      "description":"[# flag_8 #]",
+      "hints":[""]
+    },
+    "flag_9":{
+      "description":"[# flag_9 #]",
+      "hints":[""]
+    },
+    "flag_10":{
+      "description":"[# flag_10 #]",
+      "hints":[""]
+    },
+    "flag_11":{
+      "description":"[# flag_11 #]",
+      "hints":[""]
+    }
+    
+  },
+  "ignorefiles":[
+    
+  ]
+}

@@ -4,22 +4,27 @@
 
       <div class="row">
           <div class="col">
-            <h4>1. Installing OVPN</h4>
-            <p>You need OpenVPN to connect to a network.</p>
-            <code>sudo apt install openvpn</code>
-            <h4 class="mt-5">2. Download your OVPN config</h4>
+
+            {% call macros.create_card(title="1. Installing OVPN") %}
+              <p>You need OpenVPN to connect to a network.</p>
+              <code>sudo apt install openvpn</code>
+            {% endcall %}
+
+            {% call macros.create_card(title="2. Download your OVPN config") %}
             <p>You need to <a href="{{url_for('user_api.get_current_user_cfg')}}">download your vpn config</a> and place it in the root of your home directory.</p>
             <code>mv ~/Downloads/test_user.ovpn ~</code>
-            <h4 class="mt-5">3. Connect to a network</h4>
+            {% endcall %}
+
+            {% call macros.create_card(title="3. Connect to a network") %}
             <p>
               To connect to a network you simply have to execute the provided command in a terminal. You can find 
               your assigned networks on your <a href="{{url_for('index.index')}}">dashboard</a>.
               The connection command looks like the following:
             </p>
             <code>sudo openvpn --config ~/username.ovpn --remote 123.123.123 12345 udp</code>
-            <h4 class="mt-5">4. Submit a flag!</h4>
-            <p></p>
-          </div>
+            {% endcall %}
+
+            
         </div>
       </div>
       <!-- /row -->

@@ -21,3 +21,32 @@
   </div>
 </div>
 {% endmacro %}
+
+{% macro create_card(title, additional_classes="") %}
+<!-- card -->
+  <div class="card card-secondary card-outline bg-dark elevation-3 p-2 {{additional_classes}}">
+    <div class="card-header">
+      <h1 class="card-title">{{title}}</h1>
+      <div class="card-tools">
+        <button type="button" class="btn btn-tool" data-card-widget="collapse" data-toggle="tooltip" title="Collapse">
+          <i class="fas fa-minus"></i></button>
+        <button type="button" class="btn btn-tool" data-card-widget="remove" data-toggle="tooltip" title="Remove">
+          <i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div class="card-body">
+      {{ caller() }}
+    </div>
+    <!-- /.card-body -->
+  </div>
+  <!-- /card -->
+{% endmacro %}
+
+
+{% macro render_bool(bool)%}
+  {% if bool %}
+    <span class="badge bg-success"><i class="fas fa-check"></i></span>
+  {% else %}
+    <span class="badge bg-danger"><i class="fas fa-times"></i></span>
+  {% endif %}
+{% endmacro %}

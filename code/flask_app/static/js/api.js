@@ -1,4 +1,5 @@
 class Api{
+
   static getAvailableContainerImages(callback){
     let api_route = Flask.url_for("docker_api.get_available_container_images")
     $.get(api_route,(data)=>{
@@ -14,6 +15,22 @@ class Api{
       "assign_groups":groupIds
     }
     Api.postDataAsJson(api_route,data,callback)
+  }
+
+  static restartNetwork(id,callback){
+    let api_route = Flask.url_for("docker_api.restart_network",{"id":id})
+    $.get(api_route,(data)=>{
+      callback(data)
+    })
+  }
+
+  static deleteNetwork(id,callback){
+    let api_route = Flask.url_for("docker_api.delete_network",{"id":id})
+    return $.ajax({
+      url: api_route,
+      type: 'DELETE',
+      success: callback
+    });
   }
 
   static deleteNetworkPreset(id,callback){
@@ -84,8 +101,13 @@ class Api{
       type: "POST",
       data: JSON.stringify(data),
       contentType: "application/json; charset=utf-8",
-      success: callback,
-      error: callback
+      success: (response)=>{
+        callback(response,false)
+      },
+      error: (response)=>{
+
+        callback(response,true)
+      }
   });
   }
 }

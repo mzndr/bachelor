@@ -12,43 +12,51 @@
       </div>
       <!-- /row -->
 
+     
+       
+    {% for network in current_user.get_assigned_networks() %}
       <div class="row">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Gateway</th>
-              <th>Flags</th>
-              <th>Command</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for network in current_user.assigned_networks %}
-            <tr>
-              <td>{{ network.name }}</a></td>
-              <td>{{ network.gateway }}</td>
-              <td>{{ network.get_redeemed_flags().__len__() }}/{{ network.get_flags().__len__() }}</td>
-              <td><code>{{ network.get_connection_command(current_user) }}</code></td>
-              <td>
-                <button class="btn btn-primary" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">
-                  <i class="fas fa-info-circle mr-1"></i>
+        <div class = "col">
+            {% call macros.create_card(title=network.name) %}
+            <div class="row">
+              <div class="col">
+                <code>{{ network.get_connection_command(current_user) }}</code>
+              </div>
+
+              <div class="col">
+                <div class="progress mt-1">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{network.get_completion_percent()}}%;" aria-valuenow="{{network.get_completion_percent()}}" aria-valuemin="0" aria-valuemax="100">
+                  </div>
+                  <h5 class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
+                    {{ network.get_redeemed_flags().__len__() }} of {{ network.get_flags().__len__() }} flags redeemed!
+                  </h5>
+                </div>
+              </div>
+              <div class="col-sm-2">
+                <strong>Gateway:</strong> <code>{{ network.gateway }}</code>
+              </div>
+              <div class="col-sm-2">
+                <button class="btn btn-primary float-right mr-2" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">
+                  <i class="fas fa-info-circle mr-1 "></i>
                   Details
                 </button>
-                <button class="btn btn-warning control-button"><i class="fas fa-redo-alt"></i></button>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td>You aren't assigned to any network.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                <button class="btn btn-warning control-button float-right mr-2"><i class="fas fa-redo-alt"></i></button>
+              </div>
+            </div>
+            {% endcall %}
+        </div>
       </div>
+    {% else %}
+      <p>You are not assigned to any network!</p>
+    {% endfor %}
+
+
+     
       <!-- /row -->
+
+
+
   </div>
-  <!-- /container-fluid -->
 {%endblock content %}
 
 {% block javascripts%}

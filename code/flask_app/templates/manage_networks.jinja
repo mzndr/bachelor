@@ -9,14 +9,22 @@
             <tr>
               <th>Name</th>
               <th>Command</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {% for network in networks %}
-            <tr>
+            <tr id="network_{{network.id}}">
               <td>{{ network.name }}</td>
               <td><code>{{ network.get_connection_command(current_user) }}</code></td>
-              <td><button class="btn btn-danger control-button"><i class="fas fa-trash-alt"></i></button></td>
+              <td>
+                <button class="btn btn-danger control-button" onclick="ManageNetwork.deleteNetwork('{{network.id}}', this)"><i class="fas fa-trash-alt"></i></button>
+                <button class="btn btn-warning control-button" onclick="ManageNetwork.restartNetwork('{{network.id}}', this)"><i class="fas fa-redo-alt"></i></button>
+                <button class="btn btn-primary" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">
+                  <i class="fas fa-info-circle mr-1"></i>
+                  Details
+                </button>
+              </td>
             </tr>
             {% else %}
             <tr>

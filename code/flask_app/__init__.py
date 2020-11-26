@@ -74,6 +74,11 @@ def create_app(test_config=None):
                 container_image_names=["apache_tutorial"]
             )
 
+            NetworkPreset.create_network_preset(
+                name="_Debug_Preset",
+                container_image_names=["debug_container"]
+            )
+
             User.create_user(
                 username="test_user",
                 password="123456",

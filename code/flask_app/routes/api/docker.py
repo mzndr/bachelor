@@ -81,9 +81,9 @@ def start_network(id):
       assign_groups=assign_groups,
       name=netork_name
       )
-    return network.get_json()
+    return (network.get_json(), 200)
   except Exception as err:
-    return str(err), 500
+    return (str(err), 500)
 
 @docker_api_bp.route('/networks/<string:name>', methods=['GET'])
 @login_required
@@ -92,20 +92,34 @@ def get_network_by_name(name):
   network = Network.get_network_by_name(name)
   return network.get_json()
 
-@docker_api_bp.route('/networks/<string:name>/vpndata', methods=['GET'])
+@docker_api_bp.route('/networks/<int:id>/vpndata', methods=['GET'])
 @login_required
 @roles_required("admin")
-def get_network_vpn_data(name):
-  network = Network.get_network_by_name(name)
+def get_network_vpn_data(id):
+  network = Network.get_network_by_id(id)
   return jsonify(network.get_connection_command(current_user))
 
-@docker_api_bp.route('/networks/<string:name>/delete', methods=['DELETE'])
+@docker_api_bp.route('/networks/<int:id>/delete', methods=['DELETE'])
 @login_required
 @roles_required("admin")
-def delete_network(name):
-  network = Network.get_network_by_name(name)
+def delete_network(id):
+  network = Network.get_network_by_id(id)
+  if network == None:
+    return {"error":"network not found"},404
   json = network.get_json()
   network.delete()
+  return json
+
+@docker_api_bp.route('/networks/<int:id>/restart', methods=['GET'])
+@login_required
+def restart_network(id):
+  network = Network.get_network_by_id(id)
+  if not network.user_allowed_to_access(current_user):
+    return {"error":"you are not assigned to this network"},403
+  if network == None:
+    return {"error":"network not found"},404
+  network.restart()
+  json = network.get_json()
   return json
 
 @docker_api_bp.route('/networks/', methods=['GET'])
@@ -119,7 +133,6 @@ def get_all_networks():
 
   return jsonify(json)
 
-
 @docker_api_bp.route('/networks/redeem_flag', methods=['POST'])
 @login_required
 def redeem_flag():
@@ -132,6 +145,6 @@ def redeem_flag():
       return {"status":"flag already redeemed!"},410
     if flag in network.get_unredeemed_flags():
       flag.redeem(current_user)
-      return {"status":"flag successfully redeemed!"},200
+      return {"status":"flag successfully redeemed!"},1337
   
   return {"status":"invalid flag, flag not found!"},404

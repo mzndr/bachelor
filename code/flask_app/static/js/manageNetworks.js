@@ -1,3 +1,4 @@
+let loading_icon = "<div class='spinner-border mr-2' role='status'></div>"
 class CreatePreset{
   static addEntries(){
     let $availableField = $("#available_images")
@@ -82,40 +83,73 @@ class StartNetwork{
 
   }
 
-  static startNetwork(id,modal_id){
-    let loading_icon = "<div class='spinner-border mr-2' role='status'></div>"
+  static startNetwork(id,button){
+    
+    let $button = $(button)
     let $name = $(`#${id}_network_name`)
     let $usersField = $(`#${id}_assign_users`)
     let $groupsField = $(`#${id}_assign_groups`)
-    let $modal = $(`${modal_id}`)
     let name = $name.val()
     let userIds = $usersField.val()
     let groupIds = $groupsField.val()
-
+    let original_icon = $button.html();
+    
+    
+    $button.html(loading_icon)
 
     Api.startNetworkFromPreset(
       id,
       name,
       groupIds,
       userIds,
-      (response)=>{
-        $("#modalstart_1").modal('hide')
-        console.log(response)
-        if (response.status != 200){
-          Messaging.apiResponseToMessage(response)
+      (response,error)=>{
+        $("#modalstart_" + id).modal('hide')
+        $button.html(original_icon)
+        if (error){
+          if (response.status == 0){
+            Messaging.createMessage("Network created!","success")
+          } 
+          else
+          {
+            Messaging.apiResponseToMessage(response)
+          }
         }else{
           Messaging.createMessage("Network created!","success")
-          console.log(response)
         }
       }
     )
     
-    $(`#${id}_icon`).replaceWith(loading_icon)
+    
 
 
   }
 }
 
+class ManageNetwork{
+  static deleteNetwork(id,button){
+    let $button = $(button)
+    let original_icon = $button.html();
+    let $tr = $("#network_" + id)
+    $button.html(loading_icon)
+    Api.deleteNetwork(id,(response)=>{
+      $button.html(original_icon)
+      $tr.hide()
+
+      Messaging.createMessage("Deleted network","success")
+    })
+  }
+
+  static restartNetwork(id,button){
+    let $button = $(button)
+    let original_icon = $button.html();
+
+    $button.html(loading_icon)
+    Api.restartNetwork(id,(response)=>{
+      $button.html(original_icon)
+      Messaging.createMessage("Restarted network","success")
+    })
+  }
+}
 
 
 

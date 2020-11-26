@@ -6,27 +6,44 @@
             <div class="d-flex justify-content-center">
               {% include "flag_form.jinja" %}
             </div>
+            <div class="progress mt-1">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{network.get_completion_percent()}}%;" aria-valuenow="{{network.get_completion_percent()}}" aria-valuemin="0" aria-valuemax="100">
+              </div>
+              <h5 class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
+                {{ network.get_redeemed_flags().__len__() }} of {{ network.get_flags().__len__() }} flags redeemed!
+              </h5>
+            </div>
           </div>
         </div>
       </div>
       <!-- /row -->
 
       <div class="row">
+      </div>
+
+      <div class="row">
           <div class="col">
           <table class="table">
             <thead>
               <tr>
-                <th>Unredeemed Flags</th>
+                <th>Flags</th>
+                <th>Hints</th>
+                <th>Redeemed</th>
               </tr>
             </thead>
             <tbody>
               {% for flag in network.get_unredeemed_flags() %}
               <tr>
-                <td>{{ flag.get_description() }}</a></td>
+                <td>{{ flag.get_description() }}</td>
+                <td>aaa</td>
+                <td>{{ macros.render_bool(flag.redeemed)}}</td>
               </tr>
-              {% else %}
+              {% endfor %}
+              {% for flag in network.get_redeemed_flags() %}
               <tr>
-                <td>There are no running networks</td>
+                <td>{{ flag.get_description() }}</td>
+                <td>aaa</td>
+                <td>{{ macros.render_bool(flag.redeemed)}}</td>
               </tr>
               {% endfor %}
             </tbody>

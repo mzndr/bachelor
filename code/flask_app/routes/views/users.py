@@ -1,7 +1,9 @@
-from flask_security.decorators import roles_required
-from flask import Blueprint, render_template
+import json
+
+from flask import Blueprint, abort, redirect, render_template, url_for
 from flask_app.core.models.user import Group, Role, User
 from flask_security import current_user, login_required
+from flask_security.decorators import roles_required
 
 users_bp = Blueprint(
   name="users",
@@ -22,10 +24,23 @@ def manage_users():
     title="Manage Users"
     )
 
-@users_bp.route('/group_invite/<string:code>', methods=['GET'])
-@login_required
-def group_invite(code):
-  group: Group = Group.get_group_by_invite_code(code)
-  group.assign_users([current_user])
+@users_bp.route('/register/<string:group_invite>', methods=['GET'])
+def register_with_group(group_invite):
+  group = Group.get_group_by_invite_code(code)
 
-  return {"status":"success"},200
+@users_bp.route('/group_invite/<string:code>', methods=['GET'])
+def group_invite(code):
+  group = Group.get_group_by_invite_code(code)
+  if current_user.is_anonymous:
+    abort(403)
+  
+  if current_user in group.users:
+    message = json.dumps({"error":f"You are already assigned to {group.name}!"})
+  else:
+    if current_user.group is not None:
+      current_user.group.deassign_users([current_user])
+
+    group.assign_users([current_user])
+    message = json.dumps({"success":f"You are now assigned to {group.name}!"})
+
+  return redirect(url_for("index.index",message=message))

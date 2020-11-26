@@ -24,6 +24,7 @@ def get_current_user_cfg():
   )
 
 
+
 @user_api_bp.route('/current/regen_auth', methods=['GET'])
 @login_required
 def regen_auth_files():

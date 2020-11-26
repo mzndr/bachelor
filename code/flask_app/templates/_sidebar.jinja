@@ -6,7 +6,7 @@
       <!-- Sidebar user panel (optional) -->
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="info">
-          <a href="#" class="ml-1">{{current_user.username}}</a>
+          <a href="#" class="ml-1">{{current_user}}</a>
           {% call macros.create_modal_button("download_cfg", class="btn btn-primary btn-xs d-inline ml-2") %}
             <i class="fas fa-user-cog"></i>
             <i class="fas fa-download"></i>
@@ -67,8 +67,8 @@
     <p>
       <h4>WARNING:</h4>
       You are about to regenerate your vpn authentication data.
-      You won't be able to connect to running networks until they
-      are restarted. You'll also have to <a href="{{url_for('user_api.get_current_user_cfg')}}">re-download your vpn config.</a>
+      You'll have to <a href="{{url_for('user_api.get_current_user_cfg')}}">re-download your vpn config</a>
+      for newly started networks.
     </p>
   </div>
   <div class="modal-footer">
