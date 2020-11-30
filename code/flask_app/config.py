@@ -7,10 +7,11 @@ class Config(object):
   DEBUG = True
   TESTING = False
   ### APP-SETTINGS ###
+  HINT_TIMEOUT = 15
   VPN_PORT_RANGE = (50000,50100)
   PUBLIC_IP = "192.168.0.66"
   CONTAINER_DIR = "/home/marius/Projects/bachelor/code/containers"
-  CLEANUP_BEFORE_AND_AFTER = False
+  CLEANUP_BEFORE_AND_AFTER = True
   APP_PREFIX = "vitsl"
   TEMPLATES_AUTO_RELOAD = True
   ### TESTING ###
@@ -38,5 +39,7 @@ class Config(object):
   SECURITY_MSG_INVALID_PASSWORD = ('wrong_pass', 'error')
 
   ### SQL-ALCHEMY ###
-  SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'app.db')
+  #mysql://ic_user:pZ9yHYZnV3JchsdxpEcNqVknUP5YwwwfMfEjK8b4942vKRwU6g9q748TkdMabw3M@192.168.0.66:3307/issue_collector_master
+  #SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'app.db')
+  SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:root@localhost:3306/vitsl"
   SQLALCHEMY_TRACK_MODIFICATIONS = False

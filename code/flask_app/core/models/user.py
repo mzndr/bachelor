@@ -22,9 +22,9 @@ class User(db.Model, UserMixin):
 
   redeemed_flags = db.relationship("Flag",backref=db.backref('redeemed_by'))
 
-  vpn_crt = db.Column(db.String(2**16))
-  vpn_key = db.Column(db.String(2**16))
-  vpn_cfg = db.Column(db.String(2**16))
+  vpn_crt = db.Column(db.Text)
+  vpn_key = db.Column(db.Text)
+  vpn_cfg = db.Column(db.Text)
 
   active = db.Column(db.Boolean())
   confirmed_at = db.Column(db.DateTime())
@@ -41,12 +41,16 @@ class User(db.Model, UserMixin):
     for network in networks:
       completed = completed + network.get_completion_percent()
     total = len(networks) * 100
+    if total == 0:
+      return 100
+      
     percentage = (completed / total) * 100
     return percentage
 
   def get_assigned_networks(self):
     networks = self.assigned_networks.all().copy()
-    networks.extend(self.group.assigned_networks)
+    if self.group != None:
+      networks.extend(self.group.assigned_networks)
     return networks
 
   def __str__(self):
@@ -137,8 +141,8 @@ class Role(db.Model, RoleMixin):
 
 class Group(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  invite_code = db.Column(db.String, unique=True)
-  name = db.Column(db.String, unique=True)
+  invite_code = db.Column(db.String(64), unique=True)
+  name = db.Column(db.String(128), unique=True)
   users = db.relationship("User",backref="group")
 
   def __str__(self):

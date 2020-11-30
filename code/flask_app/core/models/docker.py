@@ -436,6 +436,7 @@ class Network(db.Model):
   gateway = db.Column(db.String(16))
   name = db.Column(db.String(255), unique=True)
   containers = db.relationship("Container",backref="network")
+  last_flag_time = db.Column(db.DateTime)
   flags = db.relationship("Flag",backref="network")
   assigned_users = db.relationship(
                           'User', 
@@ -450,10 +451,16 @@ class Network(db.Model):
   
   def get_completion_percent(self):
     total_flags = len(self.get_flags())
+    if total_flags == 0:
+      return 100
     completed = len(self.get_redeemed_flags())
     percentage = (completed / total_flags) * 100
     return percentage
 
+  def get_hint(flag_id):
+    flag = Flag.get_flag_by_id(flag_id)
+    return flag
+    
 
   def is_network_ready(self):
     """Checks if all containers are running"""
@@ -622,11 +629,11 @@ class Network(db.Model):
 
 class Flag(db.Model):
   id = db.Column(db.Integer(), primary_key=True)
-  name = db.Column(db.String)
-  code = db.Column(db.String, unique=True)
+  name = db.Column(db.String(32))
+  code = db.Column(db.String(64), unique=True)
   network_id = db.Column(db.Integer, db.ForeignKey('network.id'))
   container_id = db.Column(db.Integer, db.ForeignKey('container.id'))
-
+  last_hint = db.Column(db.Integer())
   redeemed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   redeemed = db.Column(db.Boolean)
 
@@ -646,7 +653,7 @@ class Flag(db.Model):
 
   def get_description(self):
     return self.container.read_properties()["flags"][self.name]["description"]
-  
+
   def get_hints(self):
     return self.container.read_properties()["flags"][self.name]["hints"]
 
@@ -673,3 +680,6 @@ class Flag(db.Model):
     code = code.replace("FLAG{","").replace("}","")
     return Flag.query.filter_by(code=code).first()
 
+  @staticmethod
+  def get_flag_by_id(id):
+    return Flag.query.get(id)
