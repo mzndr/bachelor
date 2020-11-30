@@ -86,6 +86,7 @@ def create_app(test_config=None):
                 roles=[]
             )
         except Exception as err:
+            print(str(err))
             pass
 
     # register blueprints

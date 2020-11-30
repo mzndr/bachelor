@@ -436,7 +436,7 @@ class Network(db.Model):
   gateway = db.Column(db.String(16))
   name = db.Column(db.String(255), unique=True)
   containers = db.relationship("Container",backref="network")
-  last_flag_time = db.Column(db.DateTime)
+  last_hint_time = db.Column(db.DateTime)
   flags = db.relationship("Flag",backref="network")
   assigned_users = db.relationship(
                           'User', 

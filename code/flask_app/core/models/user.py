@@ -22,15 +22,14 @@ class User(db.Model, UserMixin):
 
   redeemed_flags = db.relationship("Flag",backref=db.backref('redeemed_by'))
 
-  vpn_crt = db.Column(db.Text)
-  vpn_key = db.Column(db.Text)
-  vpn_cfg = db.Column(db.Text)
+  vpn_crt = db.Column(db.Text(2**20))
+  vpn_key = db.Column(db.Text(2**20))
+  vpn_cfg = db.Column(db.Text(2**20))
 
   active = db.Column(db.Boolean())
   confirmed_at = db.Column(db.DateTime())
   roles = db.relationship('Role', secondary=roles_users,
                           backref=db.backref('users', lazy='dynamic'))
-  vpn_crt = db.Column(db.String(255))
 
   group_id = db.Column(db.Integer, db.ForeignKey('group.id'))
 
