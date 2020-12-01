@@ -7,7 +7,7 @@ from flask import Flask
 from flask_jsglue import JSGlue
 from flask_security import Security, SQLAlchemyUserDatastore
 
-from flask_app.core.db import db
+from flask_app.core.db import db, init_data
 
 from .core.models.docker import (Container, ContainerImage, Network,
                                  NetworkPreset)
@@ -41,53 +41,24 @@ def create_app(test_config=None):
         pass
 
 
+
     # init database
     db.init_app(app)
-    with app.app_context():
-        db.create_all()
 
-    # cleanup any leftover containers, networks or files before starting or exiting
-    atexit.register(cleanup,app=app)
-    cleanup(app)
 
     # init flask-security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security = Security(app, user_datastore)
 
-    with app.app_context():
-        from flask_security.utils import hash_password
+    init_data(app)
 
-        try:
-            admin_role = Role.create_role(
-                name="admin",
-                description="Privilidged role for administration purposes"
-            )
-            User.create_user(
-                username="admin",
-                password="123456",
-                email="admin@test.local",
-                roles=[admin_role]
-            )
+    # cleanup any leftover containers, networks or files before starting or exiting
+    atexit.register(cleanup,app=app)
+    cleanup(app)
 
-            NetworkPreset.create_network_preset(
-                name="Tutorial",
-                container_image_names=["apache_tutorial"]
-            )
 
-            NetworkPreset.create_network_preset(
-                name="_Debug_Preset",
-                container_image_names=["debug_container"]
-            )
 
-            User.create_user(
-                username="test_user",
-                password="123456",
-                email="test@test.local",
-                roles=[]
-            )
-        except Exception as err:
-            print(str(err))
-            pass
+  
 
     # register blueprints
     register_blueprints(app)

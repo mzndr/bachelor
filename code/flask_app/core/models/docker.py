@@ -677,7 +677,7 @@ class Flag(db.Model):
 
   @staticmethod
   def get_flag_by_code(code):
-    code = code.replace("FLAG{","").replace("}","")
+    code = code.replace("FLAG{","").replace("}","").strip()
     return Flag.query.filter_by(code=code).first()
 
   @staticmethod

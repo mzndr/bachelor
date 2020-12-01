@@ -140,11 +140,17 @@ def redeem_flag():
   json_data = request.get_json()
   flag_code = json_data["flag"]
   flag = Flag.get_flag_by_code(flag_code)
+
+  current_app.logger.info(f"{current_user} redeeming {flag_code}")
+  current_app.logger.info(f"found flag: {flag}")
+    
   for network in current_user.assigned_networks:
     if flag in network.get_redeemed_flags():
+      current_app.logger.info(f"{flag} is already redeemed.")
       return {"status":"flag already redeemed!"},410
     if flag in network.get_unredeemed_flags():
       flag.redeem(current_user)
+      current_app.logger.info(f"{flag} is valid.")
       return {"status":"flag successfully redeemed!"},1337
   
   return {"status":"invalid flag, flag not found!"},404

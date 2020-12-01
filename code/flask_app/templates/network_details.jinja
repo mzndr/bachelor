@@ -6,7 +6,7 @@
             <div class="d-flex justify-content-center">
               {% include "flag_form.jinja" %}
             </div>
-            <div class="progress mt-1">
+            <div class="progress mt-1 elevation-1">
               <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{network.get_completion_percent()}}%;" aria-valuenow="{{network.get_completion_percent()}}" aria-valuemin="0" aria-valuemax="100">
               </div>
               <h5 class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
@@ -14,43 +14,23 @@
               </h5>
             </div>
           </div>
-        </div>
       </div>
       <!-- /row -->
-
-      <div class="row">
+      <div class="row mb-3">
         <div class="col d-flex justify-content-center">
           <code>{{ network.get_connection_command(current_user) }}</code>
         </div>
       </div>
-
       <div class="row">
           <div class="col">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Flags</th>
-                <th>Hints</th>
-                <th>Redeemed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for flag in network.get_unredeemed_flags() %}
-              <tr>
-                <td>{{ flag.get_description() }}</td>
-                <td>aaa</td>
-                <td>{{ macros.render_bool(flag.redeemed)}}</td>
-              </tr>
-              {% endfor %}
-              {% for flag in network.get_redeemed_flags() %}
-              <tr>
-                <td>{{ flag.get_description() }}</td>
-                <td>aaa</td>
-                <td>{{ macros.render_bool(flag.redeemed)}}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>           
+          {% for flag in network.get_unredeemed_flags() %}
+            {% call macros.create_card(title=flag.get_description(),additional_classes="card-danger") %}
+            {% endcall%}
+          {% endfor %}
+          {% for flag in network.get_redeemed_flags() %}
+            {% call macros.create_card(title=flag.get_description(),additional_classes="card-success") %}
+            {% endcall%}
+          {% endfor %}         
           </div>
         </div>
       </div>

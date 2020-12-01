@@ -54,6 +54,7 @@ class Messaging{
     let $message_div = Messaging.getMessageDiv(message,type)
     $messages_div.append($message_div)
     $message_div.fadeIn()
+    return $message_div
   }
 
   static apiResponseToMessage(response){
@@ -70,8 +71,14 @@ class Messaging{
     Messaging.createMessage(message,messageType)
   }
 
-  static createTemporalMessage(message,type=""){
-
+  static createTemporalMessage(message,type="",timeout=1800){
+    let $messages_div = $("#messages")
+    let $message_div = Messaging.getMessageDiv(message,type)
+    $messages_div.append($message_div)
+    $message_div.fadeIn()
+    setTimeout(()=>{
+      $message_div.fadeOut()
+    },timeout)
   }
 
 }
@@ -97,6 +104,7 @@ function copyToClipborad(text){
 
   document.execCommand("copy");
   $tmpTextarea.remove()
+  Messaging.createTemporalMessage("Text Copied!","success")
 
 }
 
