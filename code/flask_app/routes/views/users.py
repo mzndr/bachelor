@@ -35,12 +35,12 @@ def group_invite(code):
     abort(403)
   
   if current_user in group.users:
-    message = json.dumps({"error":f"You are already assigned to {group.name}!"})
+    flash(f"You are already assigned to {group.name}!","error")
   else:
     if current_user.group is not None:
       current_user.group.deassign_users([current_user])
 
     group.assign_users([current_user])
-    message = json.dumps({"success":f"You are now assigned to {group.name}!"})
+    flash(f"You are now assigned to {group.name}!","success")
 
-  return redirect(url_for("index.index",message=message))
+  return redirect(url_for("index.index"))

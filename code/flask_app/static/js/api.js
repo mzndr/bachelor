@@ -24,6 +24,13 @@ class Api{
     })
   }
 
+  static getNetwork(id,callback){
+    let api_route = Flask.url_for("docker_api.get_available_container_images")
+    $.get(api_route,(data)=>{
+      callback(data)
+    })
+  }
+
   static deleteNetwork(id,callback){
     let api_route = Flask.url_for("docker_api.delete_network",{"id":id})
     return $.ajax({
@@ -72,6 +79,16 @@ class Api{
     });
   }
   
+  static getFlagInfo(flagId,callback){
+    let api_route = Flask.url_for("docker_api.get_flag_info",{"flag_id":flagId})
+    $.get(api_route,(data)=>{callback(data)})
+  }
+
+  static getHint(networkId,flagId,callback){
+    let api_route = Flask.url_for("docker_api.get_hint",{"flag_id":flagId, "network_id":networkId})
+    $.get(api_route,(data)=>{callback(data)})
+  }
+
   static redeemFlag(flag,callback){
     let api_route = Flask.url_for("docker_api.redeem_flag")
     let data = {"flag":flag}

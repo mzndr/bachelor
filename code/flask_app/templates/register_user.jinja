@@ -1,0 +1,35 @@
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+
+
+{% extends "_base.jinja" %}
+
+{% block navbar %}{% endblock navbar %}
+{% block sidebar %}{% endblock sidebar %}
+{% block footer %}{% endblock footer %}
+
+{#  #}
+
+{% block content_header %}<h1>Login</h1>{% endblock content_header %}
+{% block content %}
+  <div class="container-fluid">
+      <div class="row">
+        <div class = "col">
+          <div class="form-group w-25 small-box p-5 elevation-5">
+            <form action="{{ url_for('user_api.register_user') }}" class="form" method="POST" name="register_user_form">
+              <label>Username</label>
+              <input name="username" type="text" class="form-control elevation-2" required="">
+              <label>Email</label>
+              <input name="email" type="email" class="form-control elevation-2" required="">
+              <label>Password</label>
+              <input name="password" type="password" class="form-control elevation-2" required="">
+              <label>Retype Password</label>
+              <input name="retype_password" type="password" class="form-control elevation-2">
+              <input name="submit" type="submit" value="Register" class="btn btn-primary elevation-2 mt-3">
+            </form>
+            {% include "security/_menu.html" %}
+          </div>
+        </div>
+      </div>
+
+  </div>
+{% endblock content %}

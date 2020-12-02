@@ -25,21 +25,21 @@ class Messaging{
   
     switch (type) {
       case "error":
-        bg = "bg-danger"
+        bg = "alert-danger"
         break;
       case "warning":
-        bg = "bg-warning"
+        bg = "alert-warning"
         break;
       case "success":
-        bg = "bg-success"
+        bg = "alert-success"
         break;
       default:
-        bg = "bg-info"
+        bg = "alert-info"
         break;
     }
   
     let message_div_html = 
-    `<div class="jumbotron ${bg} elevation-1 mb-3">
+    `<div class="alert ${bg} elevation-1 mb-3">
       <button type="button" onclick="Messaging.closeMessage(this)" class="close" aria-label="Close">
         <span aria-hidden="true">×</span>
       </button>

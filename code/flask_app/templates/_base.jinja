@@ -23,15 +23,19 @@
 
 <body class="bg-dark">
   <div class="wrapper">
-    {% include '_navbar.jinja' %}
-    {% include '_sidebar.jinja' %}
+
+    {% block navbar %}{% include '_navbar.jinja' %}{% endblock navbar %}
+    {% block sidebar %}{% include '_sidebar.jinja' %}{% endblock sidebar %}
 
     <!-- Main content -->
     <div class="content-wrapper bg-dark mt-5 mr-5">
       <div class="ml-5">
         <div class="content-header">
+          {% block messaging %}
           <div id="messages" class=messages>
+          {% include "_flash.jinja" %}
           </div>
+          {% endblock messaging%}
           {% block content_header %}<h1>{{title}}</h1>{% endblock content_header %}
         </div>
         <div class="content mt-5">
@@ -43,6 +47,7 @@
 
 
     <!-- Footer -->
+    {% block footer %}
     <footer class="main-footer bg-dark">
       <a href="{{ url_for('security.logout') }}">Logout</a>
       <!-- To the right -->
@@ -51,7 +56,7 @@
       </div> 
     </footer>
     <div id="sidebar-overlay"></div>
-    
+    {% endblock footer %}
   {% block javascripts %}
   <!-- Bootstrap -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

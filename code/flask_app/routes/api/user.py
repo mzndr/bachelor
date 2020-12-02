@@ -1,6 +1,10 @@
 import io
+import json
 
-from flask import Blueprint, jsonify, request, send_file
+from flask import (Blueprint, current_app, flash, jsonify, redirect, request,
+                   send_file, url_for)
+from flask_app.core.exceptions.user import (RegistrationException,
+                                            RetypePasswordDoesntMatchException)
 from flask_app.core.models.user import Group, Role, User
 from flask_security import current_user, login_required
 
@@ -22,6 +26,36 @@ def get_current_user_cfg():
     attachment_filename=filename,
     as_attachment=True
   )
+
+@user_api_bp.route('/register', methods=['POST'])
+def register_user():
+  try:
+    data = request.form
+    username = data["username"]
+    email = data["email"]
+    password = data["password"]
+    retype_password = data["retype_password"]
+
+    if password != retype_password:
+      raise RetypePasswordDoesntMatchException()
+
+    User.create_user(
+      username=username,
+      password=password,
+      email=email
+    )
+
+  except RegistrationException as err:
+    flash(f"Something went wrong: {str(err)}","error")
+    return redirect(url_for("security.register"))
+  except Exception as err:
+    current_app.logger.error(str(err))
+    flash(f"Something went wrong","error")
+
+    return redirect(url_for("security.register"))  
+  
+  flash(f"Account created! Log in to contine.","success")
+  return redirect(url_for("security.login"))
 
 
 

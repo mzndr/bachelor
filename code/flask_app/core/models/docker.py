@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import re
@@ -345,6 +346,7 @@ class NetworkPreset(db.Model):
   """Model for holding a network preset"""
   id = db.Column(db.Integer(), primary_key=True)  
   name = db.Column(db.String(255), unique=True)
+  networks = db.relationship("Network",backref="preset")
   container_images = db.relationship(
     "ContainerImage",
     cascade="delete, delete-orphan"
@@ -392,7 +394,8 @@ class NetworkPreset(db.Model):
       network_name= name,
       container_image_names=container_image_names,
       assign_users=assign_users,
-      assign_groups=assign_groups
+      assign_groups=assign_groups,
+      preset=self
     )
 
 
@@ -437,7 +440,9 @@ class Network(db.Model):
   name = db.Column(db.String(255), unique=True)
   containers = db.relationship("Container",backref="network")
   last_hint_time = db.Column(db.DateTime)
+  network_preset_id = db.Column(db.Integer, db.ForeignKey('network_preset.id'))
   flags = db.relationship("Flag",backref="network")
+
   assigned_users = db.relationship(
                           'User', 
                           secondary=network_users,
@@ -456,12 +461,44 @@ class Network(db.Model):
     completed = len(self.get_redeemed_flags())
     percentage = (completed / total_flags) * 100
     return percentage
+  
+  def get_next_hint_time(self):
+    if self.last_hint_time == None:
+      return datetime.datetime.now()
 
-  def get_hint(flag_id):
-    flag = Flag.get_flag_by_id(flag_id)
-    return flag
+    hint_timeout = current_app.config["HINT_TIMEOUT"]
+    return self.last_hint_time + datetime.timedelta(minutes = hint_timeout)
     
+  def get_hint(self,flag_id):
+    flag = Flag.get_flag_by_id(flag_id)
+    hints = flag.get_hints()
+    hint_timeout = current_app.config["HINT_TIMEOUT"]
+    data = {"status":"","hint":""}
+    now = datetime.datetime.now()
 
+
+
+    if self.last_hint_time == None:
+      data["hint"] = flag.get_hint()
+      data["status"] = "success"
+      self.last_hint_time = now
+    else:
+      time_diff = (now - self.last_hint_time).total_seconds() / 60
+      if time_diff >= hint_timeout:
+        data["hint"] = flag.get_hint()
+        data["status"] = "success"
+        return data
+      else:
+        data["hint"] = str(self.get_next_hint_time())
+        data["status"] = "timeout" 
+        self.last_hint_time = now
+
+
+    
+    db.session.add(self)
+    db.session.commit()
+    return data
+    
   def is_network_ready(self):
     """Checks if all containers are running"""
     for container in self.containers:
@@ -478,7 +515,12 @@ class Network(db.Model):
       "vpn_port": self.vpn_port,
       "assigned_users": [],
       "containers": [],
+      "flags":[],
+      "next_hint":self.get_next_hint_time()
     }
+
+    for flag in self.flags:
+      json["flags"].append(flag.get_json())
 
     for user in self.assigned_users:
       json["assigned_users"].append(user.get_json())
@@ -570,7 +612,7 @@ class Network(db.Model):
     return matching_network is None
 
   @staticmethod
-  def create_network(network_name,container_image_names,assign_users = [], assign_groups = []):
+  def create_network(network_name,container_image_names,assign_users = [], assign_groups = [],preset=None):
     
     if not utils.is_valid_docker_name(network_name):
       raise errors.InvalidNetworkNameException(network_name)
@@ -590,7 +632,8 @@ class Network(db.Model):
         name=network_name,
         gateway=gateway,
         assigned_users=assign_users,
-        assigned_groups=assign_groups
+        assigned_groups=assign_groups,
+        preset=preset
       )
 
       db.session.add(network_db)
@@ -640,12 +683,30 @@ class Flag(db.Model):
   def __str__(self):
     return "FLAG{" + self.code + "}"
 
+  def get_json(self):
+    json = {
+      "name":self.name,
+      "redeemed": self.redeemed,
+      "last_hint": self.last_hint,
+      "description": self.get_description(),
+      "next_hint": self.network.get_next_hint_time()
+      
+    }
+    hints_left = len(self.get_hints()) - len(self.get_revealed_hints())
+
+    json["hints_left"] = hints_left
+    if self.redeemed_by != None:
+      json["redeemed_by"] = self.redeemed_by.get_json()
+    else:
+      json["redeemed_by"] = None
+
+    return json
+
   def redeem(self,user):
     self.redeemed = True
     self.redeemed_by = user
     db.session.add(self)
     db.session.commit()
-
 
   def delete(self):
     db.session.delete(self)
@@ -653,6 +714,36 @@ class Flag(db.Model):
 
   def get_description(self):
     return self.container.read_properties()["flags"][self.name]["description"]
+
+
+  def get_hint(self):
+    hints = self.get_hints()
+    last_hint_index = self.last_hint
+    if last_hint_index == None:
+      last_hint_index = -1
+      
+    last_hint_index = last_hint_index + 1
+
+    if last_hint_index >= len(hints):
+      return None
+
+    hint = hints[last_hint_index]
+
+    self.last_hint = last_hint_index
+    db.session.add(self)
+    db.session.commit()
+    return hint
+
+  def get_revealed_hints(self):
+    ret = []
+    hints = self.get_hints()
+    
+    if self.last_hint == None:
+      return []
+
+    for i in range(self.last_hint + 1):
+      ret.append(hints[i])
+    return ret
 
   def get_hints(self):
     return self.container.read_properties()["flags"][self.name]["hints"]
@@ -662,7 +753,6 @@ class Flag(db.Model):
     code = str(uuid.uuid4()).replace("-","")
 
     container: Container = container
-
 
     flag = Flag(
       network=network,

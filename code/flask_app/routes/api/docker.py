@@ -87,9 +87,14 @@ def start_network(id):
 
 @docker_api_bp.route('/networks/<string:name>', methods=['GET'])
 @login_required
-@roles_required("admin")
 def get_network_by_name(name):
   network = Network.get_network_by_name(name)
+  return network.get_json()
+
+@docker_api_bp.route('/networks/id/<int:id>', methods=['GET'])
+@login_required
+def get_network_by_id(id):
+  network = Network.get_network_by_id(id)
   return network.get_json()
 
 @docker_api_bp.route('/networks/<int:id>/vpndata', methods=['GET'])
@@ -133,7 +138,21 @@ def get_all_networks():
 
   return jsonify(json)
 
-@docker_api_bp.route('/networks/redeem_flag', methods=['POST'])
+@docker_api_bp.route('/networks/<int:network_id>/flags/<int:flag_id>/get_hint', methods=['GET'])
+@login_required
+def get_hint(network_id,flag_id):
+  network = Network.get_network_by_id(network_id)
+  hint = network.get_hint(flag_id)
+  return jsonify(hint)
+
+@docker_api_bp.route('/flags/<int:flag_id>/', methods=['GET'])
+@login_required
+def get_flag_info(flag_id):
+  flag = Flag.get_flag_by_id(flag_id)
+  return jsonify(flag.get_json())
+
+
+@docker_api_bp.route('/flsgs/redeem_flag', methods=['POST'])
 @login_required
 def redeem_flag():
   networks = Network.get_all_networks()

@@ -2,6 +2,8 @@ import uuid
 
 from flask import url_for
 from flask_app.core.db import db
+from flask_app.core.exceptions.user import (EmailAlreadyTakenException,
+                                            UsernameAlreadyTakenException)
 from flask_app.core.models.docker import Container, Network
 from flask_security import RoleMixin, UserMixin
 from flask_security.utils import hash_password
@@ -38,11 +40,10 @@ class User(db.Model, UserMixin):
     completed = 0
     total = 0
     for network in networks:
-      completed = completed + network.get_completion_percent()
-    total = len(networks) * 100
-    if total == 0:
+      completed = completed + len(network.get_redeemed_flags())
+      total = total + len(network.get_flags())
+    if len(networks)  == 0:
       return 100
-      
     percentage = (completed / total) * 100
     return percentage
 
@@ -78,6 +79,12 @@ class User(db.Model, UserMixin):
 
   @staticmethod
   def create_user(username,password,email,roles=[]):
+
+    if User.get_user_by_username(username) != None:
+      raise UsernameAlreadyTakenException(name=username)
+    if User.get_user_by_email(email) != None:
+      raise EmailAlreadyTakenException(email=email)
+
     user =  User(
       username=username,
       password=hash_password(password),
@@ -99,6 +106,10 @@ class User(db.Model, UserMixin):
   @staticmethod
   def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
+
+  @staticmethod
+  def get_user_by_email(email):
+    return User.query.filter_by(email=email).first()
 
   @staticmethod
   def get_user_by_id(id):

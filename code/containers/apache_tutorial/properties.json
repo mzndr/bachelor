@@ -3,7 +3,7 @@
   "flags":{
     "flag_1":{
       "description":"This flag is obtained by simply accessing the webpage of the container ([! container_ip !]).",
-      "hints":["Maybe you need to connect to the networks vpn first?"]
+      "hints":["Maybe you need to connect to the networks vpn first?","debug_hint2","debug_hint3","debug_hint4"]
     }
   },
   "ignorefiles":[

@@ -9,6 +9,3 @@ class Error(Exception):
   
   def __str__(self):
     return self.message
-
-class NameNotAvailableException(Error):
-  pass

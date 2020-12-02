@@ -1,0 +1,20 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      {% if category == "error"%}
+      <div class="alert alert-danger elevation-1 mb-3">
+      {% elif category == "warning"%}
+      <div class="alert alert-warning elevation-1 mb-3">
+      {% elif category == "success"%}
+      <div class="alert alert-success elevation-1 mb-3">
+      {% else %}
+      <div class="alert alert-info elevation-1 mb-3">
+      {% endif %}
+        <button type="button" onclick="Messaging.closeMessage(this)" class="close" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+        <span>{{message}}</span>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}

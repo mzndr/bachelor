@@ -19,12 +19,31 @@
       <div class="row mb-3">
         <div class="col d-flex justify-content-center">
           <code>{{ network.get_connection_command(current_user) }}</code>
+          <code>{{ network.gateway }}</code>
         </div>
       </div>
       <div class="row">
           <div class="col">
+          <h3>Flags</h3>
           {% for flag in network.get_unredeemed_flags() %}
             {% call macros.create_card(title=flag.get_description(),additional_classes="card-danger") %}
+               <table id="flag_{{flag.id}}_hints" class="table table-dark elevation-2 mb-3">
+                <thead>
+                  <tr>
+                    <th>Hints</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for hint in flag.get_revealed_hints() %}
+                  <tr>
+                    <td style="border: none;">{{ hint }}</td>
+                  </tr>
+                  {% else %}
+                  <tr class="none"><td>None.</td></tr>
+                  {% endfor %}
+                </table>
+
+              <button class="btn btn-primary" onload="buttonTimer({{flag.id}},this)" onclick="getHint({{network.id}},{{flag.id}},this)">Get a Hint!</button>
             {% endcall%}
           {% endfor %}
           {% for flag in network.get_redeemed_flags() %}
@@ -41,5 +60,5 @@
 
 {% block javascripts%}
 {{super()}}
-
+<script src="{{url_for('static', filename='js/networkDetails.js')}}"></script>
 {% endblock %}
