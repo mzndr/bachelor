@@ -15,6 +15,8 @@ user_api_bp = Blueprint(
   )
 
 
+### User ###
+
 @user_api_bp.route('/current/cfg', methods=['GET'])
 @login_required
 def get_current_user_cfg():
@@ -37,7 +39,7 @@ def register_user():
     retype_password = data["retype_password"]
 
     if password != retype_password:
-      raise RetypePasswordDoesntMatchException()
+      raise user_errors.RetypePasswordDoesntMatchException()
 
     User.create_user(
       username=username,
@@ -63,12 +65,11 @@ def regen_auth_files():
   current_user.gen_vpn_files()
   return {"status":"success"},200
 
-
 @user_api_bp.route('/<int:user_id>/grant/<string:role_name>', methods=['PUT'])
 @login_required
 @roles_required('admin')
 def grant_role(user_id,role_name):
-  user: User = User.get_user_by_id(user_id)
+  user = User.get_user_by_id(user_id)
   user.grant_role(role_name)
   return jsonify(user.get_json())
 
@@ -76,9 +77,18 @@ def grant_role(user_id,role_name):
 @login_required
 @roles_required('admin')
 def revoke_role(user_id,role_name):
-  user: User = User.get_user_by_id(user_id)
+  user = User.get_user_by_id(user_id)
   user.revoke_role(role_name)
   return jsonify(user.get_json())
+
+@user_api_bp.route('/<int:id>/delete', methods=['DELETE'])
+@login_required
+@roles_required('admin')
+def delete_user(id):
+  user = User.get_user_by_id(id)
+  json = user.get_json()
+  user.delete()
+  return jsonify(json)
 
 @user_api_bp.route('/', methods=['GET'])
 @login_required
@@ -90,6 +100,10 @@ def get_all_users():
     ret.append(user.get_json())
   return jsonify(ret)
 
+
+
+### Groups ### 
+
 @user_api_bp.route('/groups/', methods=['GET'])
 @login_required
 @roles_required('admin')
@@ -99,7 +113,6 @@ def get_all_groups():
   for group in groups:
     ret.append(group.get_json())
   return jsonify(ret)
-
 
 @user_api_bp.route('/groups/create', methods=['POST'])
 @login_required

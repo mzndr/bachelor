@@ -52,6 +52,10 @@ class User(db.Model, UserMixin):
       networks.extend(self.group.assigned_networks)
     return networks
 
+  def delete(self):
+    db.session.delete(self)
+    db.session.commit()
+
   def __str__(self):
     if self.group is None:
       return f"{self.username} (no group)"  
@@ -93,9 +97,9 @@ class User(db.Model, UserMixin):
   @staticmethod
   def create_user(username,password,email,roles=[]):
 
-    if User.get_user_by_username(username) != None:
+    if User.username_exists(username):
       raise user_errors.UsernameAlreadyTakenException(name=username)
-    if User.get_user_by_email(email) != None:
+    if User.email_exists(email):
       raise user_errors.EmailAlreadyTakenException(email=email)
 
     user =  User(
@@ -131,22 +135,39 @@ class User(db.Model, UserMixin):
   def get_user_by_username(username):
     user = User.query.filter_by(username=username).first()
     if user == None:
-      raise user_errors.UserNotFoundException(user=user)
+      raise user_errors.UserNotFoundException(identification=username)
     return user
 
   @staticmethod
   def get_user_by_email(email):
     user = User.query.filter_by(email=email).first()
     if user == None:
-      raise user_errors.UserNotFoundException(user=user)
+      raise user_errors.UserNotFoundException(identification=email)
     return user
 
   @staticmethod
   def get_user_by_id(id):
     user = User.query.get(id)
     if user == None:
-      raise user_errors.UserNotFoundException(user=user)
+      raise user_errors.UserNotFoundException(identification=id)
     return user
+
+  @staticmethod 
+  def username_exists(username):
+    try:
+      User.get_user_by_username(username)
+    except user_errors.UserNotFoundException as err:
+      return False
+    return True
+  
+  @staticmethod 
+  def email_exists(email):
+    try:
+      User.get_user_by_email(email)
+    except user_errors.UserNotFoundException as err:
+      return False
+    return True
+
 
 class Role(db.Model, RoleMixin):
   id = db.Column(db.Integer(), primary_key=True)

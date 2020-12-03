@@ -18,10 +18,15 @@ class ManageGroups{
 }
 
 class ManageUsers{
-  static deleteUser(userId){}
+  static deleteUser(userId)
+  {
+    Api.deleteUser(userId,(response)=>{
+      $(`#user_${userId}`).fadeOut()
+      Messaging.createMessage("User deleted!","success")
+    })
+  }
   static grantRole(userId,roleName){
     Api.grantRole(userId,roleName,(response)=>{
-      console.log(response)
       location.reload()
     })
   }

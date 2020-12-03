@@ -40,6 +40,15 @@ class Api{
     });
   }
 
+  static deleteUser(id,callback){
+    let api_route = Flask.url_for("user_api.delete_user",{"id":id})
+    return $.ajax({
+      url: api_route,
+      type: 'DELETE',
+      success: callback
+    });
+  }
+
   static deleteNetworkPreset(id,callback){
     let api_route = Flask.url_for("docker_api.delete_network_preset",{"id":id})
     return $.ajax({

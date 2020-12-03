@@ -23,7 +23,7 @@
               </thead>
               <tbody>
                 {% for user in users %}
-                <tr>
+                <tr id="user_{{user.id}}">
                   <td>{{ user.username }} {% if user == current_user%}(you){% endif %}</td>
                   <td>{{ user.email }}</td>
                   <td>{{ user.group.name }}</td>
@@ -35,7 +35,19 @@
                   </td>
                   {% if current_user != user%}
                   <td>
-                    <button class="btn btn-danger"><i class="fas fa-trash-alt"></i></button>
+                    {% call macros.create_modal_button("_user_" + user.id.__str__(), class="btn btn-danger control-button float-left mr-2") %}
+                      <i class="fas fa-trash-alt"></i>
+                    {% endcall %}
+                    {% call macros.create_modal("_user_" + user.id.__str__(), title="Confirmation required!") %}
+                      <div class="modal-body">
+                        <p>Do you really want to delete {{user.username}}?</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="ManageUsers.deleteUser({{user.id}})">Yes</button>
+                        <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
+                      </div>
+                    {% endcall %}
+
                     {% if user.has_role("admin") %}
                       <button class="btn btn-warning" onclick="ManageUsers.revokeRole({{user.id}},'admin')"><i class="fas fa-user-shield mr-2"></i>Revoke Admin</button>
                     {% else %}
