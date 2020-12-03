@@ -365,7 +365,7 @@ class NetworkPreset(db.Model):
     db.session.delete(self)
     db.session.commit()
 
-  def create_network(self,assign_users,assign_groups,name):
+  def create_network(self,name,assign_users=[],assign_groups=[]):
     """Creates a network from the preset"""
     if not utils.is_valid_docker_name(name):
       raise errors.InvalidNetworkNameException(name)

@@ -16,3 +16,23 @@ class ManageGroups{
     })
   }
 }
+
+class ManageUsers{
+  static deleteUser(userId){}
+  static grantRole(userId,roleName){
+    Api.grantRole(userId,roleName,(response)=>{
+      console.log(response)
+      location.reload()
+    })
+  }
+  static revokeRole(userId,roleName){
+    Api.revokeRole(userId,roleName,(response)=>{
+      location.reload()
+    })
+  }
+}
+
+$(document).ready(function(){
+  $("#usertable").DataTable()
+  $("#grouptable").DataTable()
+})

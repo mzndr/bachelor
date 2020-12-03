@@ -48,6 +48,9 @@
           {% endfor %}
           {% for flag in network.get_redeemed_flags() %}
             {% call macros.create_card(title=flag.get_description(),additional_classes="card-success") %}
+              {% if current_user.has_role("admin") %}
+                Redeemed by: {{ flag.redeemed_by.username }}
+              {% endif%}
             {% endcall%}
           {% endfor %}         
           </div>

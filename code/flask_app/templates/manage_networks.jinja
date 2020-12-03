@@ -1,116 +1,132 @@
 {% extends "_base.jinja" %}
+
+{% block stylesheets%}
+{{ super() }}
+<!-- Datatables-->
+<link href="http://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" rel="stylesheet">
+{% endblock stylesheets%}
+
 {% block content_header %}<h1>Manage Networks</h1>{% endblock content_header %}
 {% block content %}
   <div class="container-fluid">
       <div class="row mb-5">
-        <h4>Running Networks</h4>
-        <table class="table table-dark elevation-2 mt-3">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Preset</th>
-              <th>Command</th>
-              <th>Assigned Entities</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for network in networks %}
-            <tr id="network_{{network.id}}">
-              <td>{{ network.name }}</td>
-              <td>{{ network.preset.name }}</td>
-              <td><code>{{ network.get_connection_command(current_user) }}</code></td>
-              <td>
-                {% for group in network.assigned_groups %}
-                  {{macros.render_groupname(group)}}
+        <div class="col">
+          Running Networks
+          <div class="small-box bg-light p-3 mt-3 w-100">
+            <table id="networktable" class="table elevation-2 mt-3">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Preset</th>
+                  <th>Command</th>
+                  <th>Assigned Entities</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for network in networks %}
+                <tr id="network_{{network.id}}">
+                  <td>{{ network.name }}</td>
+                  <td>{{ network.preset.name }}</td>
+                  <td><code>{{ network.get_connection_command(current_user) }}</code></td>
+                  <td>
+                    {% for group in network.assigned_groups %}
+                      {{macros.render_groupname(group)}}
+                    {% endfor %}
+                    {% for user in network.assigned_users %}
+                      {{macros.render_username(user)}}
+                    {% endfor %}
+                  </td>
+                  <td>
+                    <button class="btn btn-danger control-button" onclick="ManageNetwork.deleteNetwork('{{network.id}}', this)"><i class="fas fa-trash-alt"></i></button>
+                    <button class="btn btn-warning control-button" onclick="ManageNetwork.restartNetwork('{{network.id}}', this)"><i class="fas fa-redo-alt"></i></button>
+                    <button class="btn btn-primary" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">
+                      <i class="fas fa-info-circle mr-1"></i>
+                      Details
+                    </button>
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td>There are no running networks</td>
+                </tr>
                 {% endfor %}
-                {% for user in network.assigned_users %}
-                  {{macros.render_username(user)}}
-                {% endfor %}
-              </td>
-              <td>
-                <button class="btn btn-danger control-button" onclick="ManageNetwork.deleteNetwork('{{network.id}}', this)"><i class="fas fa-trash-alt"></i></button>
-                <button class="btn btn-warning control-button" onclick="ManageNetwork.restartNetwork('{{network.id}}', this)"><i class="fas fa-redo-alt"></i></button>
-                <button class="btn btn-primary" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">
-                  <i class="fas fa-info-circle mr-1"></i>
-                  Details
-                </button>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td>There are no running networks</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <!-- /row -->
 
 
       <div class="row">
-        <h4>Network Presets</h4>
-        {% call macros.create_modal_button("create_preset", class="ml-3 btn btn-xs btn-success float-right") %}
+        <div class="col">
+        Network Presets
+        {% call macros.create_modal_button("create_preset", class="ml-3 btn btn-xs btn-success") %}
           <i class="fas fa-plus mr-2"></i>
           Create Preset
         {% endcall %}
         {% call macros.create_modal("create_preset", title="Compose a preset!", additional_modal_classes="modal-xl") %}
           {% include "modals/create_network_preset_modal.jinja" %}
         {% endcall %}
+        </div>
       </div>
       <!-- /row -->
       <div class="row">
-        
-        <table class="table table-dark elevation-2 mt-3">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Containers</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for preset in presets %}
-            <tr id="{{preset.id}}">
-              <td>{{ preset.name }}</td>
-              <td>
-                {% for container_image in preset.container_images %}
-                  <span class="badge badge-secondary mr-1">{{container_image.name}}</span>
-                {% else %}
-                  None.
-                {% endfor %} 
-              </td>
-              <td>
-                <!-- Start network button -->
-                {% call macros.create_modal_button("start_" + preset.id.__str__(), class="btn btn-success control-button float-left mr-1") %}
-                  <i class="fas fa-play"></i>
-                {% endcall %}
-                {% call macros.create_modal("start_" + preset.id.__str__(), title="Start a network!",additional_modal_classes="modal-xl") %}
-                  {% include "modals/start_network_modal.jinja"%}
-                {% endcall %}
+        <div class="col">
+          <div class="small-box bg-light p-3 w-100 mt-3">
+            <table id="presettable" class="table elevation-2 mt-3">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Containers</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for preset in presets %}
+                <tr id="{{preset.id}}">
+                  <td>{{ preset.name }}</td>
+                  <td>
+                    {% for container_image in preset.container_images %}
+                      <span class="badge badge-secondary mr-1">{{container_image.name}}</span>
+                    {% else %}
+                      None.
+                    {% endfor %} 
+                  </td>
+                  <td>
+                    <!-- Start network button -->
+                    {% call macros.create_modal_button("start_" + preset.id.__str__(), class="btn btn-success control-button float-left mr-1") %}
+                      <i class="fas fa-play"></i>
+                    {% endcall %}
+                    {% call macros.create_modal("start_" + preset.id.__str__(), title="Start a network!",additional_modal_classes="modal-xl") %}
+                      {% include "modals/start_network_modal.jinja"%}
+                    {% endcall %}
 
-                <!-- Delete preset button -->
-                {% call macros.create_modal_button("delete_" + preset.id.__str__(), class="btn btn-danger control-button float-left") %}
-                  <i class="fas fa-trash-alt"></i>
-                {% endcall %}
-                {% call macros.create_modal("delete_" + preset.id.__str__(), title="Confirmation required!") %}
-                  <div class="modal-body">
-                    <p>Do you really want to delete {{preset.name}}?</p>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="ManagePreset.deleteNetworkPreset('{{preset.id}}')">Yes</button>
-                    <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
-                  </div>
-                {% endcall %}
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td>There are no presets yet</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                    <!-- Delete preset button -->
+                    {% call macros.create_modal_button("delete_" + preset.id.__str__(), class="btn btn-danger control-button float-left") %}
+                      <i class="fas fa-trash-alt"></i>
+                    {% endcall %}
+                    {% call macros.create_modal("delete_" + preset.id.__str__(), title="Confirmation required!") %}
+                      <div class="modal-body">
+                        <p>Do you really want to delete {{preset.name}}?</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="ManagePreset.deleteNetworkPreset('{{preset.id}}')">Yes</button>
+                        <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
+                      </div>
+                    {% endcall %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td>There are no presets yet</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <!-- /row -->
   </div>
@@ -119,5 +135,6 @@
 
 {% block javascripts%}
 {{super()}}
+<script src="http://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
 <script src="{{ url_for('static',filename='js/manageNetworks.js')}}"></script>
 {% endblock %}

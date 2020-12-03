@@ -160,4 +160,7 @@ class ManageNetwork{
 $(document).ready(()=>{
   CreatePreset.loadAvailableImages()
   StartNetwork.loadGroupsAndUsers()
+
+  $("#networktable").DataTable()
+  $("#presettable").DataTable()
 })

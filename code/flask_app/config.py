@@ -7,8 +7,10 @@ class Config(object):
   DEBUG = True
   TESTING = False
   ### APP-SETTINGS ###
+  CREATE_TUTORIAL_NETWORK_ON_REGISTRATION = False
   HINT_TIMEOUT = 15
   VPN_PORT_RANGE = (50000,50100)
+  
   PUBLIC_IP = "192.168.0.66"
   CONTAINER_DIR = "/home/marius/Projects/bachelor/code/containers"
   CLEANUP_BEFORE_AND_AFTER = False

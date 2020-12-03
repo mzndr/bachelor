@@ -1,88 +1,129 @@
 {% extends "_base.jinja" %}
+{% block stylesheets%}
+{{ super() }}
+<!-- Datatables-->
+<link href="http://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" rel="stylesheet">
+{% endblock stylesheets%}
+
 {% block content %}
   <div class="container-fluid">
       <div class="row mb-5">
-        <h4>Users</h4>
-        <table class="table table-dark elevation-2 mt-3">
-          <thead>
-            <tr>
-              <th>Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for user in users %}
-            <tr>
-              <td>{{ user.username }}</td>
-            </tr>
-            {% else %}
-            <tr>
-              <td>There are no users yet</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <!-- /row -->
+        <div class="col">
+          Users
+          <div class="small-box bg-light p-3 mt-3 w-100">
+            <table class="elevation-2 mt-3" id="usertable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>E-Mail</th>
+                  <th>Group</th>
+                  <th>Roles</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                <tr>
+                  <td>{{ user.username }} {% if user == current_user%}(you){% endif %}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.group.name }}</td>
+                  <td>
+                    {% for role in user.roles%}
+                    {{macros.render_role(role)}}
+                    {% else %}
+                    {% endfor%}
+                  </td>
+                  {% if current_user != user%}
+                  <td>
+                    <button class="btn btn-danger"><i class="fas fa-trash-alt"></i></button>
+                    {% if user.has_role("admin") %}
+                      <button class="btn btn-warning" onclick="ManageUsers.revokeRole({{user.id}},'admin')"><i class="fas fa-user-shield mr-2"></i>Revoke Admin</button>
+                    {% else %}
+                      <button class="btn btn-warning" onclick="ManageUsers.grantRole({{user.id}},'admin')"><i class="fas fa-user-shield mr-2"></i>Grant Admin</button>
+                    {% endif %}
+                  </td>
 
 
-      <div class="row">
-        <h4>Groups</h4>
-        {% call macros.create_modal_button("create_group", class="ml-3 btn btn-xs btn-success float-right") %}
-          <i class="fas fa-plus mr-2"></i>
-          Create Group
-        {% endcall %}
-        {% call macros.create_modal("create_group", title="Create a group!",additional_modal_classes="modal-xl") %}
-            {% include "modals/create_group_modal.jinja" %}
-        {% endcall %}
-      </div>
-      <!-- /row -->
-      <div class="row">
-        
-        <table class="table table-dark elevation-2 mt-3">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Users</th>
-              <th>Invite Link</th>
-              <th></th>
-            </tr>
-            
-          </thead>
-          <tbody>
-            {% for group in groups %}
-            <tr id="group_{{group.id}}">
-              <td>{{ group.name }}</td>
-              <td>
-                {% for user in group.users %}
-                <span class="mr-2">{{ user.username }}</span>
+                  {% else %}
+                  <td></td>
+                  {% endif %}
+                </tr>
                 {% else %}
-                None.
+                <tr>
+                  <td>There are no users yet</td>
+                </tr>
                 {% endfor %}
-              </td>
-              <td><code>{{ group.get_invite_url() }}</code></td>
-              <td>
-                <!-- Delete preset button -->
-                {% call macros.create_modal_button("_group_" + group.id.__str__(), class="btn btn-danger control-button float-left") %}
-                  <i class="fas fa-trash-alt"></i>
-                {% endcall %}
-                {% call macros.create_modal("_group_" + group.id.__str__(), title="Confirmation required!") %}
-                  <div class="modal-body">
-                    <p>Do you really want to delete {{group.name}}?</p>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="ManageGroups.deleteGroup('{{group.id}}')">Yes</button>
-                    <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
-                  </div>
-                {% endcall %}
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td>There are no groups yet</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- /row -->
+
+
+      <div class="row">
+        <div class="col">
+          Groups
+          {% call macros.create_modal_button("create_group", class="ml-3 btn btn-xs btn-success") %}
+            <i class="fas fa-plus mr-2"></i>
+            Create Group
+          {% endcall %}
+          {% call macros.create_modal("create_group", title="Create a group!",additional_modal_classes="modal-xl") %}
+              {% include "modals/create_group_modal.jinja" %}
+          {% endcall %}
+        </div>
+      </div>
+      <!-- /row -->
+      <div class="row">
+        <div class="col">
+          <div class="small-box bg-light p-3 mt-3 w-100">
+            <table class="table elevation-2 mt-3" id="grouptable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Users</th>
+                  <th>Invite Link</th>
+                  <th>Actions</th>
+                </tr>
+                
+              </thead>
+              <tbody>
+                {% for group in groups %}
+                <tr id="group_{{group.id}}">
+                  <td>{{ group.name }}</td>
+                  <td>
+                    {% for user in group.users %}
+                    <span class="mr-2">{{ user.username }}</span>
+                    {% else %}
+                    None.
+                    {% endfor %}
+                  </td>
+                  <td><code>{{ group.get_invite_url() }}</code></td>
+                  <td>
+                    <!-- Delete preset button -->
+                    {% call macros.create_modal_button("_group_" + group.id.__str__(), class="btn btn-danger control-button float-left") %}
+                      <i class="fas fa-trash-alt"></i>
+                    {% endcall %}
+                    {% call macros.create_modal("_group_" + group.id.__str__(), title="Confirmation required!") %}
+                      <div class="modal-body">
+                        <p>Do you really want to delete {{group.name}}?</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="ManageGroups.deleteGroup('{{group.id}}')">Yes</button>
+                        <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
+                      </div>
+                    {% endcall %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td>There are no groups yet</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <!-- /row -->
   </div>
@@ -91,5 +132,7 @@
 
 {% block javascripts%}
 {{super()}}
-<script src="{{url_for('static', filename='js/manageGroups.js')}}"></script>
+<script src="http://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+<script src="{{url_for('static', filename='js/manageUsers.js')}}"></script>
+
 {% endblock %}

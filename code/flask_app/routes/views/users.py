@@ -1,6 +1,6 @@
 import json
 
-from flask import Blueprint, abort, redirect, render_template, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, url_for
 from flask_app.core.models.user import Group, Role, User
 from flask_security import current_user, login_required
 from flask_security.decorators import roles_required

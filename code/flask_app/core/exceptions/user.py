@@ -30,3 +30,19 @@ class RetypePasswordDoesntMatchException(RegistrationException):
 
     self.message = message
     super().__init__(self.message) 
+
+class UserNotFoundException(Error):
+    def __init__(self,user,message=None):
+      if message == None:
+        message = f"User '{user.username}' was not found."
+
+      self.message = message
+      super().__init__(self.message) 
+
+class RoleNotFoundException(Error):
+    def __init__(self,role,message=None):
+      if message == None:
+        message = f"Role '{role.name}' was not found."
+
+      self.message = message
+      super().__init__(self.message) 

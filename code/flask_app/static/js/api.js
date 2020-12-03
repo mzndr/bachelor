@@ -89,6 +89,20 @@ class Api{
     $.get(api_route,(data)=>{callback(data)})
   }
 
+  static grantRole(userId,roleName,callback){
+    let api_route = Flask.url_for("user_api.grant_role",{"role_name":roleName,"user_id":userId})
+    Api.putDataAsJson(api_route,{},(response)=>{
+      callback(response)
+    })
+  }
+
+  static revokeRole(userId,roleName,callback){
+    let api_route = Flask.url_for("user_api.revoke_role",{"role_name":roleName,"user_id":userId})
+    Api.putDataAsJson(api_route,{},(response)=>{
+      callback(response)
+    })
+  }
+
   static redeemFlag(flag,callback){
     let api_route = Flask.url_for("docker_api.redeem_flag")
     let data = {"flag":flag}
@@ -126,6 +140,24 @@ class Api{
         callback(response,true)
       }
   });
+  }  static putDataAsJson(url,data,callback){
+    $.ajax({
+      timeout:0,
+      async:true,
+      url: url,
+      type: "PUT",
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      success: (response)=>{
+        callback(response,false)
+      },
+      error: (response)=>{
+
+        callback(response,true)
+      }
+  });
   }
 }
+
+
 

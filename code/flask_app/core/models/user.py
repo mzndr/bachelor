@@ -1,10 +1,9 @@
 import uuid
 
-from flask import url_for
+import flask_app.core.exceptions.user as user_errors
+from flask import current_app, flash, url_for
 from flask_app.core.db import db
-from flask_app.core.exceptions.user import (EmailAlreadyTakenException,
-                                            UsernameAlreadyTakenException)
-from flask_app.core.models.docker import Container, Network
+from flask_app.core.models.docker import Container, Network, NetworkPreset
 from flask_security import RoleMixin, UserMixin
 from flask_security.utils import hash_password
 from flask_sqlalchemy import SQLAlchemy
@@ -58,6 +57,20 @@ class User(db.Model, UserMixin):
       return f"{self.username} (no group)"  
     return f"{self.username} ({self.group.name})"  
 
+  def grant_role(self,role_name):
+    role = Role.get_role_by_name(role_name)
+    if role not in self.roles:
+      self.roles.append(role)
+    db.session.add(self)
+    db.session.commit()
+  
+  def revoke_role(self,role_name):
+    role = Role.get_role_by_name(role_name)
+    if role in self.roles:
+      self.roles.remove(role)
+    db.session.add(self)
+    db.session.commit()
+
   def gen_vpn_files(self):
     user_crt, user_key, user_cfg = Container.gen_vpn_crt_and_cfg(self)
     self.vpn_crt = user_crt
@@ -81,9 +94,9 @@ class User(db.Model, UserMixin):
   def create_user(username,password,email,roles=[]):
 
     if User.get_user_by_username(username) != None:
-      raise UsernameAlreadyTakenException(name=username)
+      raise user_errors.UsernameAlreadyTakenException(name=username)
     if User.get_user_by_email(email) != None:
-      raise EmailAlreadyTakenException(email=email)
+      raise user_errors.EmailAlreadyTakenException(email=email)
 
     user =  User(
       username=username,
@@ -97,6 +110,17 @@ class User(db.Model, UserMixin):
     db.session.commit()
     user.gen_vpn_files()
 
+    
+    if(current_app.config["CREATE_TUTORIAL_NETWORK_ON_REGISTRATION"]):
+      try:
+        NetworkPreset.get_network_preset_by_name("Tutorial").create_network(
+          assign_users=[user],
+          name= f"{user.username}_tutorial_network"
+          )
+      except Exception as err:
+        current_app.logger.error(str(err))
+        flash(f"Tutorial Network could not be created: {str(err)}","error")
+
     return user
 
   @staticmethod
@@ -105,15 +129,24 @@ class User(db.Model, UserMixin):
   
   @staticmethod
   def get_user_by_username(username):
-    return User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username).first()
+    if user == None:
+      raise user_errors.UserNotFoundException(user=user)
+    return user
 
   @staticmethod
   def get_user_by_email(email):
-    return User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=email).first()
+    if user == None:
+      raise user_errors.UserNotFoundException(user=user)
+    return user
 
   @staticmethod
   def get_user_by_id(id):
-    return User.query.get(id)
+    user = User.query.get(id)
+    if user == None:
+      raise user_errors.UserNotFoundException(user=user)
+    return user
 
 class Role(db.Model, RoleMixin):
   id = db.Column(db.Integer(), primary_key=True)
@@ -132,11 +165,14 @@ class Role(db.Model, RoleMixin):
 
   @staticmethod
   def get_admin_users():
-    return Role.get_roll_by_name("admin").get_users()
+    return Role.get_role_by_name("admin").get_users()
 
   @staticmethod
-  def get_roll_by_name(name):
-    return Role.query.filter_by(name=name).first()
+  def get_role_by_name(name):
+    role = Role.query.filter_by(name=name).first()
+    if role == None:
+      raise user_errors.RoleNotFoundException(role=role)
+    return role
 
   @staticmethod
   def create_role(name,description):

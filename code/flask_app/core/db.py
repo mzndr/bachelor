@@ -15,6 +15,17 @@ def init_data(app):
   with app.app_context():
     db.create_all()
     try:
+
+        NetworkPreset.create_network_preset(
+            name="Tutorial",
+            container_image_names=["apache_tutorial"]
+        )
+
+        NetworkPreset.create_network_preset(
+            name="_Debug_Preset",
+            container_image_names=["debug_container"]
+        )
+        
         admin_role = Role.create_role(
             name="admin",
             description="Privilidged role for administration purposes"
@@ -27,15 +38,7 @@ def init_data(app):
             roles=[admin_role]
         )
 
-        NetworkPreset.create_network_preset(
-            name="Tutorial",
-            container_image_names=["apache_tutorial"]
-        )
 
-        NetworkPreset.create_network_preset(
-            name="_Debug_Preset",
-            container_image_names=["debug_container"]
-        )
 
         User.create_user(
             username="test_user",

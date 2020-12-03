@@ -1,12 +1,12 @@
 import io
 import json
 
+import flask_app.core.exceptions.user as user_errors
 from flask import (Blueprint, current_app, flash, jsonify, redirect, request,
                    send_file, url_for)
-from flask_app.core.exceptions.user import (RegistrationException,
-                                            RetypePasswordDoesntMatchException)
 from flask_app.core.models.user import Group, Role, User
 from flask_security import current_user, login_required
+from flask_security.decorators import roles_required
 
 user_api_bp = Blueprint(
   name="user_api",
@@ -45,7 +45,7 @@ def register_user():
       email=email
     )
 
-  except RegistrationException as err:
+  except user_errors.RegistrationException as err:
     flash(f"Something went wrong: {str(err)}","error")
     return redirect(url_for("security.register"))
   except Exception as err:
@@ -57,16 +57,32 @@ def register_user():
   flash(f"Account created! Log in to contine.","success")
   return redirect(url_for("security.login"))
 
-
-
 @user_api_bp.route('/current/regen_auth', methods=['GET'])
 @login_required
 def regen_auth_files():
   current_user.gen_vpn_files()
   return {"status":"success"},200
 
+
+@user_api_bp.route('/<int:user_id>/grant/<string:role_name>', methods=['PUT'])
+@login_required
+@roles_required('admin')
+def grant_role(user_id,role_name):
+  user: User = User.get_user_by_id(user_id)
+  user.grant_role(role_name)
+  return jsonify(user.get_json())
+
+@user_api_bp.route('/<int:user_id>/revoke/<string:role_name>', methods=['PUT'])
+@login_required
+@roles_required('admin')
+def revoke_role(user_id,role_name):
+  user: User = User.get_user_by_id(user_id)
+  user.revoke_role(role_name)
+  return jsonify(user.get_json())
+
 @user_api_bp.route('/', methods=['GET'])
 @login_required
+@roles_required('admin')
 def get_all_users():
   ret = []
   users = User.get_all_users()
@@ -76,6 +92,7 @@ def get_all_users():
 
 @user_api_bp.route('/groups/', methods=['GET'])
 @login_required
+@roles_required('admin')
 def get_all_groups():
   ret = []
   groups = Group.get_all_groups()
@@ -86,6 +103,7 @@ def get_all_groups():
 
 @user_api_bp.route('/groups/create', methods=['POST'])
 @login_required
+@roles_required('admin')
 def create_group():
   json_data = request.get_json()
   name = json_data["name"]
@@ -97,6 +115,7 @@ def create_group():
 
 @user_api_bp.route('/groups/delete/<int:id>', methods=['DELETE'])
 @login_required
+@roles_required('admin')
 def delete_group(id):
   group = Group.get_group_by_id(id)
   json = group.get_json()
