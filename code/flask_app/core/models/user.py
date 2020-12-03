@@ -192,7 +192,7 @@ class Role(db.Model, RoleMixin):
   def get_role_by_name(name):
     role = Role.query.filter_by(name=name).first()
     if role == None:
-      raise user_errors.RoleNotFoundException(role=role)
+      raise user_errors.RoleNotFoundException(name=name)
     return role
 
   @staticmethod

@@ -37,9 +37,6 @@ def init_data(app):
             email="admin@test.local",
             roles=[admin_role]
         )
-
-
-
         User.create_user(
             username="test_user",
             password="123456",

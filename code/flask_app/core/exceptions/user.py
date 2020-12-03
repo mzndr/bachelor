@@ -4,7 +4,7 @@ from flask_app.core.exceptions.generic import Error
 class RegistrationException(Error):
   def __init__(self,message):
     self.message = message
-    super().__init__(self.message)
+    super().__init__(self.message,log=False)
 
 
 class UsernameAlreadyTakenException(RegistrationException):
@@ -40,9 +40,9 @@ class UserNotFoundException(Error):
       super().__init__(self.message) 
 
 class RoleNotFoundException(Error):
-    def __init__(self,role,message=None):
+    def __init__(self,name,message=None):
       if message == None:
-        message = f"Role '{role.name}' was not found."
+        message = f"Role '{name}' was not found."
 
       self.message = message
       super().__init__(self.message) 
