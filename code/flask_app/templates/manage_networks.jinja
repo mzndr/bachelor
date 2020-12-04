@@ -16,6 +16,7 @@
             <table id="networktable" class="table elevation-2 mt-3">
               <thead>
                 <tr>
+                  <th>Status</th>
                   <th>Name</th>
                   <th>Preset</th>
                   <th>Command</th>
@@ -26,6 +27,7 @@
               <tbody>
                 {% for network in networks %}
                 <tr id="network_{{network.id}}">
+                  <td>{{ macros.render_bool(network.is_network_ready()) }}</td>
                   <td>{{ network.name }}</td>
                   <td>{{ network.preset.name }}</td>
                   <td><code>{{ network.get_connection_command(current_user) }}</code></td>

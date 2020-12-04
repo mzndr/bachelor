@@ -16,12 +16,20 @@
           </div>
       </div>
       <!-- /row -->
+
+
+
       <div class="row mb-3">
         <div class="col d-flex justify-content-center">
           <code>{{ network.get_connection_command(current_user) }}</code>
           <code>{{ network.gateway }}</code>
         </div>
       </div>
+
+      {% if current_user.has_role("admin")%}
+        {% include "network_details_admin_zone.jinja" %}
+      {% endif %}
+
       <div class="row">
           <div class="col">
           <h3>Flags</h3>

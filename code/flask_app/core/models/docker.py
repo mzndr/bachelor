@@ -78,6 +78,7 @@ class Container(db.Model):
       "name":self.name,
       "docker_id": self.docker_id,
       "network_id": self.network_id,
+      "ip": self.ip,
       "files_location": self.files_location,
       "properties": self.read_properties(),
       "status": self.get_status()
