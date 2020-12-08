@@ -536,7 +536,7 @@ class Network(db.Model):
       container.restart()
 
   def user_allowed_to_access(self,user):
-    return user in self.assigned_users or user.group in self.assigned_groups
+    return user in self.assigned_users or user.group in self.assigned_groups or user.has_role("admin")
 
   def get_flag(self,regex_match,container):
     """Gets a flag if it exists, or creates it and returns it if not"""
