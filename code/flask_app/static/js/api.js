@@ -25,7 +25,7 @@ class Api{
   }
 
   static getNetwork(id,callback){
-    let api_route = Flask.url_for("docker_api.get_available_container_images")
+    let api_route = Flask.url_for("docker_api.get_network_by_id",{"id":id})
     $.get(api_route,(data)=>{
       callback(data)
     })
