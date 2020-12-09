@@ -1,5 +1,6 @@
 {
   "description":"Simple apache container for the user to test their vpn connection",
+  "hostname":"debug_container",
   "flags":{
     "flag_1":{
       "description":"[# flag_1 #]",

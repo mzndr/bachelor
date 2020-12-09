@@ -13,7 +13,7 @@ class Config(object):
   
   PUBLIC_IP = "192.168.0.66"
   CONTAINER_DIR = "/home/marius/Projects/bachelor/code/containers"
-  CLEANUP_BEFORE_AND_AFTER = False
+  CLEANUP_BEFORE_AND_AFTER = True
   APP_PREFIX = "vitsl"
   TEMPLATES_AUTO_RELOAD = True
   ### TESTING ###

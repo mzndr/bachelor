@@ -62,28 +62,28 @@ def delete_network_preset(id):
 @login_required
 @roles_required("admin")
 def start_network(id):
-  try:
-    preset = NetworkPreset.get_network_preset_by_id(id)
-    json_data = request.get_json()
-    assign_users_ids = json_data["assign_users"]
-    assign_users = []
-    assign_groups_ids = json_data["assign_groups"]
-    assign_groups = []
-    netork_name = json_data["network_name"]
+  #try:
+  preset = NetworkPreset.get_network_preset_by_id(id)
+  json_data = request.get_json()
+  assign_users_ids = json_data["assign_users"]
+  assign_users = []
+  assign_groups_ids = json_data["assign_groups"]
+  assign_groups = []
+  netork_name = json_data["network_name"]
 
-    for user_id in assign_users_ids:
-      assign_users.append(User.get_user_by_id(user_id))
-    for group_id in assign_groups_ids:
-      assign_groups.append(Group.get_group_by_id(group_id))
+  for user_id in assign_users_ids:
+    assign_users.append(User.get_user_by_id(user_id))
+  for group_id in assign_groups_ids:
+    assign_groups.append(Group.get_group_by_id(group_id))
 
-    network = preset.create_network(
-      assign_users=assign_users,
-      assign_groups=assign_groups,
-      name=netork_name
-      )
-    return (network.get_json(), 200)
-  except Exception as err:
-    return (str(err), 500)
+  network = preset.create_network(
+    assign_users=assign_users,
+    assign_groups=assign_groups,
+    name=netork_name
+    )
+  return (network.get_json(), 200)
+  #except Exception as err:
+  #  return (str(err), 500)
 
 @docker_api_bp.route('/networks/<string:name>', methods=['GET'])
 @login_required

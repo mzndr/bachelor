@@ -46,17 +46,40 @@ class Container(db.Model):
   flags = db.relationship("Flag",backref="container")
 
 
+  def update_hosts_file(self):
+    file_lines = self.network.get_hosts_file_lines()
 
+    current_app.logger.info(f"Updating hosts file of {self.name}")
+
+    for line in file_lines:
+      cmd = f'echo {line} >> /etc/hosts'
+      self.exec_command(cmd)
+
+  def exec_command(self,cmd):
+      obj = self.get_container_object()
+      bash_cmd = f'/bin/sh -c "{cmd}"'
+      return obj.exec_run(
+        cmd=bash_cmd,
+        privileged=True
+        )
 
   def get_status(self):
     return str(self.get_container_object().status)
 
-  def read_properties(self):
+  def read_properties(self,key=None):
     path = os.path.join(self.files_location,"properties.json")
     with open(path) as json_file:
       str_data = json_file.read()
-      str_data = str_data.replace("[! container_ip !]",self.ip)
+      if self.ip != None:
+        str_data = str_data.replace("[! container_ip !]",self.ip)
       data = json.loads(str_data)
+
+      if key != None:
+        try:
+          return data[key]
+        except:
+          return None
+
       return data
 
   def stop(self):
@@ -115,6 +138,27 @@ class Container(db.Model):
             with open(filepath,"w") as fw:
               fw.write(new_content)
 
+  def place_context(self):
+    flag_regex = r'(\[\!\ )+([a-z,A-Z,0-9,_])+(\ \!\])'
+    rootdir = self.files_location
+
+    for subdir, dirs, files in os.walk(rootdir):
+      for file in files:
+        filepath = os.path.join(subdir, file)
+        with open(filepath,"r") as fr:
+          f_content = fr.read()
+          new_content = re.sub(
+            pattern=flag_regex,
+            repl= lambda match: self.get_context(match),
+            string=f_content
+            )
+
+          if new_content != f_content:
+            with open(filepath,"w") as fw:
+              fw.write(new_content)
+  
+  def get_context(self,match):
+    pass
 
 
   ### STATIC METHODS ###
@@ -175,7 +219,8 @@ class Container(db.Model):
       privileged=privileged,
       ports=ports,
       command=command,
-      volumes=volumes      
+      volumes=volumes,
+      hostname= container_db.read_properties("hostname")   
     )
 
     container.reload() # Let the docker daemon refetch container information
@@ -224,7 +269,7 @@ class Container(db.Model):
       existing_location=data_path,
       ports={"1194/udp":None},              
       cap_add="NET_ADMIN",
-      privileged=True,
+      privileged=True
       )
 
     return vpn_container
@@ -517,7 +562,8 @@ class Network(db.Model):
       "assigned_users": [],
       "containers": [],
       "flags":[],
-      "next_hint":self.get_next_hint_time()
+      "next_hint":self.get_next_hint_time(),
+      "hosts_file": self.get_hosts_file_lines()
     }
 
     for flag in self.flags:
@@ -530,6 +576,15 @@ class Network(db.Model):
       json["containers"].append(container.get_json())
 
     return json
+
+  def get_hosts_file_lines(self):
+    lines = []
+    for container in self.containers:
+      hostname = container.read_properties("hostname")
+      ip = container.ip
+      if hostname != None:
+        lines.append(f"{ip} {hostname}")
+    return lines
 
   def restart(self):
     for container in self.containers:
@@ -622,7 +677,6 @@ class Network(db.Model):
       network = docker_client.networks.create(
           name=network_name,
           check_duplicate=True,
-          internal=False
         )
       network.reload()
       gateway = network.attrs["IPAM"]["Config"][0]["Gateway"]
@@ -647,6 +701,9 @@ class Network(db.Model):
 
       for container_folder in container_image_names:
         Container.create_detatched_container(container_folder,network_db)
+      
+      for container in network_db.containers:
+        container.update_hosts_file()
       
       
       db.session.commit()

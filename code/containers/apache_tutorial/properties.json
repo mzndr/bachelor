@@ -1,5 +1,6 @@
 {
   "description":"Simple apache container for the user to test their vpn connection",
+  "hostname":"apache_container",
   "flags":{
     "flag_1":{
       "description":"This flag is obtained by simply accessing the webpage of the container ([! container_ip !]).",
