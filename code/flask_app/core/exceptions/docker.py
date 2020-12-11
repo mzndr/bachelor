@@ -33,3 +33,10 @@ class InvalidNetworkNameException(Error):
     self.message = message
     super().__init__(self.message)
 
+class NoPortsAvailableException(Error):
+  def __init__(self,message=None):
+    if message==None:
+      message= f"All ports are used, no port available."
+
+    self.message = message
+    super().__init__(self.message) 

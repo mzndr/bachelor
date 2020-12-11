@@ -262,17 +262,21 @@ class Container(db.Model):
       with open(key_location,"w") as key_file:
         key_file.write(user.vpn_key)
 
-    
+    port = Network.get_available_port()
     vpn_container = Container.create_detatched_container(
       vpn_image,
       network,
       existing_location=data_path,
-      ports={"1194/udp":None},              
+      ports={"1194/udp":port},              
       cap_add="NET_ADMIN",
       privileged=True
       )
 
     return vpn_container
+
+
+
+
 
   @staticmethod 
   def gen_vpn_crt_and_cfg(user):
@@ -323,6 +327,7 @@ class Container(db.Model):
     shutil.rmtree(location)
 
     return user_crt, user_key, user_cfg
+
 
   @staticmethod
   def cleanup():
@@ -727,6 +732,24 @@ class Network(db.Model):
     for network in Network.get_all_networks():
       network.delete()
     docker_client.networks.prune()
+
+  @staticmethod
+  def get_available_port():
+    networks = Network.get_all_networks()
+    used_ports = []
+    
+    for network in networks:
+      used_ports.append(network.vpn_port)
+
+    port_range = current_app.config["VPN_PORT_RANGE"]
+    port_min = port_range[0]
+    port_max = port_range[1]
+
+    for port in range(port_min,port_max):
+      if port not in used_ports:
+        return port
+
+    raise errors.NoPortsAvailableException()
 
 class Flag(db.Model):
   id = db.Column(db.Integer(), primary_key=True)
