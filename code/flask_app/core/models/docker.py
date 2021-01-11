@@ -118,7 +118,6 @@ class Container(db.Model):
     container_object.reload() # Also tell docker-daemon to fetch current information about the container. 
     return container_object
 
-
   def place_flags(self):
     flag_regex = r'(\[\#\ )+([a-z,A-Z,0-9,_])+(\ \#\])'
     rootdir = self.files_location
@@ -208,6 +207,7 @@ class Container(db.Model):
     image, logs = docker_client.images.build(
       path=data_path,
       nocache=True,
+      forcerm=True
     )
 
     container = docker_client.containers.run(
@@ -274,10 +274,6 @@ class Container(db.Model):
 
     return vpn_container
 
-
-
-
-
   @staticmethod 
   def gen_vpn_crt_and_cfg(user):
     
@@ -328,10 +324,9 @@ class Container(db.Model):
 
     return user_crt, user_key, user_cfg
 
-
   @staticmethod
   def cleanup():
-    containers = Container.query.all()
+    docker_client.images.prune()
     for container in docker_client.containers.list():
       if "vitsl" in container.name:
         container.kill()
