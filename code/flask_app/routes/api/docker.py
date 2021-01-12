@@ -152,7 +152,7 @@ def get_flag_info(flag_id):
   return jsonify(flag.get_json())
 
 
-@docker_api_bp.route('/flsgs/redeem_flag', methods=['POST'])
+@docker_api_bp.route('/flags/redeem_flag', methods=['POST'])
 @login_required
 def redeem_flag():
   networks = Network.get_all_networks()

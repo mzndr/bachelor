@@ -23,15 +23,7 @@
                 <code>{{ network.get_connection_command(current_user) }}</code>
               </div>
 
-              <div class="col">
-                <div class="progress mt-1 elevation-2" style="">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{network.get_completion_percent()}}%;" aria-valuenow="{{network.get_completion_percent()}}" aria-valuemin="0" aria-valuemax="100">
-                  </div>
-                  <h5 class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
-                    {{ network.get_redeemed_flags().__len__() }} of {{ network.get_flags().__len__() }} flags redeemed!
-                  </h5>
-                </div>
-              </div>
+
               <div class="col-md-2">
                 <strong>Gateway:</strong> <code>{{ network.gateway }}</code>
               </div>
@@ -41,6 +33,17 @@
                   Details
                 </button>
                
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col">
+                <div class="progress mt-1 elevation-2" style="">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{network.get_completion_percent()}}%;" aria-valuenow="{{network.get_completion_percent()}}" aria-valuemin="0" aria-valuemax="100">
+                  </div>
+                  <h5 class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
+                    {{ network.get_redeemed_flags().__len__() }} of {{ network.get_flags().__len__() }} flags redeemed!
+                  </h5>
+                </div>
               </div>
             </div>
             {% endcall %}
