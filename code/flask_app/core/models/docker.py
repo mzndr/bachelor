@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import tempfile
+import threading
 import uuid
 from distutils.dir_util import copy_tree
 
@@ -228,8 +229,6 @@ class Container(db.Model):
     container_db.docker_id = container.id
     container_db.ip = container.attrs["NetworkSettings"]["Networks"][network.name]["IPAddress"]
 
-    db.session.add(container_db)
-    db.session.flush()
     return container_db
   
   @staticmethod
@@ -478,6 +477,12 @@ class NetworkPreset(db.Model):
     db.session.commit()
     return preset
 
+
+
+NETWORK_STATUS_RUNNING = "running"
+NETWORK_STATUS_STARTING = "starting"
+NETWORK_STATUS_RESTARTING = "restarting"
+NETWORK_STATUS_ERROR = "error"
 class Network(db.Model):
   """Model for a running network"""
   id = db.Column(db.Integer(), primary_key=True)
@@ -489,6 +494,8 @@ class Network(db.Model):
   last_hint_time = db.Column(db.DateTime)
   network_preset_id = db.Column(db.Integer, db.ForeignKey('network_preset.id'))
   flags = db.relationship("Flag",backref="network")
+  status = db.Column(db.String(16))
+
 
   assigned_users = db.relationship(
                           'User', 
@@ -645,6 +652,9 @@ class Network(db.Model):
   def get_connection_command(self,user):
     ip = current_app.config["PUBLIC_IP"]
     port = self.vpn_port
+
+    if self.status != NETWORK_STATUS_RUNNING:
+      return "Network is still starting..."
     command = f"sudo openvpn --config ~/{user.username}.ovpn --remote {ip} {port} udp"
     return command
 
@@ -669,12 +679,41 @@ class Network(db.Model):
     return matching_network is None
 
   @staticmethod
+  def start_containers(network_name,container_image_names,app):
+    with app.app_context():
+      
+      try:
+        session = db.create_scoped_session()
+        network = session.query(Network).filter(Network.name == network_name).first()
+
+        vpn_container = Container.create_vpn_container(network)
+        vpn_container_object = vpn_container.get_container_object()
+        network.vpn_port = vpn_container_object.ports['1194/udp'][0]['HostPort']
+
+        for container_folder in container_image_names:
+          Container.create_detatched_container(container_folder,network)
+        
+        for container in network.containers:
+          container.update_hosts_file()
+        
+        network.status = NETWORK_STATUS_RUNNING
+        
+        session.commit()
+
+      except Exception as err:
+        network.status = NETWORK_STATUS_ERROR
+        print(err)
+        raise err
+      
+
+  @staticmethod
   def create_network(network_name,container_image_names,assign_users = [], assign_groups = [],preset=None):
     
     if not utils.is_valid_docker_name(network_name):
       raise errors.InvalidNetworkNameException(network_name)
     network = None
     try:
+  
       network = docker_client.networks.create(
           name=network_name,
           check_duplicate=True,
@@ -685,32 +724,34 @@ class Network(db.Model):
       assign_users = utils.remove_duplicates_from_list(assign_users)
       assign_groups = utils.remove_duplicates_from_list(assign_groups)
 
+      
+
       network_db = Network(
         name=network_name,
         gateway=gateway,
         assigned_users=assign_users,
         assigned_groups=assign_groups,
         preset=preset,
-        subnet=subnet
+        subnet=subnet,
+        status=NETWORK_STATUS_STARTING
       )
-
       db.session.add(network_db)
-      db.session.flush()
-
-      vpn_container = Container.create_vpn_container(network_db)
-
-      vpn_container_object = vpn_container.get_container_object()
-      network_db.vpn_port = vpn_container_object.ports['1194/udp'][0]['HostPort']
-
-      for container_folder in container_image_names:
-        Container.create_detatched_container(container_folder,network_db)
-      
-      for container in network_db.containers:
-        container.update_hosts_file()
-      
-      
       db.session.commit()
 
+
+
+      #network_db.start_containers(container_image_names)
+      worker_thread = threading.Thread(
+        target=Network.start_containers,
+        args=(
+          network_name,
+          container_image_names,
+          current_app._get_current_object(),
+          )
+        )
+      worker_thread.start()
+
+      
       return network_db
     except Exception as err:
       # If we fail somewhere during the creation process
@@ -840,8 +881,8 @@ class Flag(db.Model):
       code=code,
       redeemed=False
     )
-    db.session.add(flag)
-    db.session.commit()
+    #db.session.add(flag)
+    #db.session.commit()
     return flag
 
   @staticmethod
