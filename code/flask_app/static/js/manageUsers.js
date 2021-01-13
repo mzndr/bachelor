@@ -35,6 +35,15 @@ class ManageUsers{
       location.reload()
     })
   }
+
+  static resetPassword(userId){
+    Api.resetPassword(userId,(response)=>{
+      let password = response.new_password;
+      let username = response.username;
+      Messaging.createMessage(`${username}'s new password is ${password}`,"success")
+    })
+  }
+
 }
 
 $(document).ready(function(){

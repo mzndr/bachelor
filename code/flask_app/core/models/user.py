@@ -95,11 +95,14 @@ class User(db.Model, UserMixin):
     return json
 
   def reset_password(self):
-    charset = string.ascii_letters
+    charset = []
+    charset.extend(string.ascii_letters)
+    charset.extend(string.digits)
+    
     pass_length = current_app.config["RESET_PASSWORD_LENGTH"]
-    password = ""
+    password: str = ""
     for i in range(pass_length):
-      password.join(random.choice(charset))
+      password += (random.choice(charset))
 
     self.password = hash_password(password)
     db.session.add(self)

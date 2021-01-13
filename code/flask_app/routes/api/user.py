@@ -93,10 +93,14 @@ def delete_user(id):
 @user_api_bp.route('/<int:id>/reset_password', methods=['PUT'])
 @login_required
 @roles_required('admin')
-def delete_user(id):
+def reset_password(id):
   user: User = User.get_user_by_id(id)
   new_password = user.reset_password()
-  return jsonify({"new_password:":new_password})
+  response = {
+    "username":user.username,
+    "new_password":new_password
+  }
+  return jsonify(response)
 
 
 @user_api_bp.route('/', methods=['GET'])

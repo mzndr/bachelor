@@ -49,6 +49,15 @@ class Api{
     });
   }
 
+  static resetPassword(id,callback){
+    let api_route = Flask.url_for("user_api.reset_password",{"id":id})
+    return $.ajax({
+      url: api_route,
+      type: 'PUT',
+      success: callback
+    });
+  }
+
   static deleteNetworkPreset(id,callback){
     let api_route = Flask.url_for("docker_api.delete_network_preset",{"id":id})
     return $.ajax({
