@@ -483,6 +483,7 @@ class Network(db.Model):
   id = db.Column(db.Integer(), primary_key=True)
   vpn_port = db.Column(db.Integer(), unique=True)
   gateway = db.Column(db.String(16))
+  subnet = db.Column(db.String(16))
   name = db.Column(db.String(255), unique=True)
   containers = db.relationship("Container",backref="network")
   last_hint_time = db.Column(db.DateTime)
@@ -680,6 +681,7 @@ class Network(db.Model):
         )
       network.reload()
       gateway = network.attrs["IPAM"]["Config"][0]["Gateway"]
+      subnet = network.attrs["IPAM"]["Config"][0]["Subnet"]
       assign_users = utils.remove_duplicates_from_list(assign_users)
       assign_groups = utils.remove_duplicates_from_list(assign_groups)
 
@@ -688,7 +690,8 @@ class Network(db.Model):
         gateway=gateway,
         assigned_users=assign_users,
         assigned_groups=assign_groups,
-        preset=preset
+        preset=preset,
+        subnet=subnet
       )
 
       db.session.add(network_db)

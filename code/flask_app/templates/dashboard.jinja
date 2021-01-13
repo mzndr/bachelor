@@ -20,12 +20,12 @@
             {% call macros.create_card(title=network.name) %}
             <div class="row">
               <div class="col">
-                <code>{{ network.get_connection_command(current_user) }}</code>
+                <strong>Command:</strong><code>{{ network.get_connection_command(current_user) }}</code>
               </div>
 
 
-              <div class="col-md-2">
-                <strong>Gateway:</strong> <code>{{ network.gateway }}</code>
+              <div class="col">
+                <strong>Network:</strong> <code>{{ network.subnet }}</code>
               </div>
               <div class="col-sm-1">
                 <button class="btn btn-primary float-right mr-2" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">

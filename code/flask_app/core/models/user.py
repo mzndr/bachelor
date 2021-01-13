@@ -1,3 +1,5 @@
+import random
+import string
 import uuid
 
 import flask_app.core.exceptions.user as user_errors
@@ -8,13 +10,11 @@ from flask_security import RoleMixin, UserMixin
 from flask_security.utils import hash_password
 from flask_sqlalchemy import SQLAlchemy
 
-import docker
-
 roles_users = db.Table('roles_users',
         db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
         db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
-docker_client = docker.from_env()    
+  
 class User(db.Model, UserMixin):
   id = db.Column(db.Integer, primary_key=True)
   username = db.Column(db.String(255), unique=True)
@@ -93,6 +93,19 @@ class User(db.Model, UserMixin):
     for role in self.roles:
       json["roles"].append(role.get_json())
     return json
+
+  def reset_password(self):
+    charset = string.ascii_letters
+    pass_length = current_app.config["RESET_PASSWORD_LENGTH"]
+    password = ""
+    for i in range(pass_length):
+      password.join(random.choice(charset))
+
+    self.password = hash_password(password)
+    db.session.add(self)
+    db.session.commit()
+    return password
+
 
   @staticmethod
   def create_user(username,password,email,roles=[]):
