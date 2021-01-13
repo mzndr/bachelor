@@ -26,7 +26,7 @@
               <tbody>
                 {% for network in networks %}
                 <tr id="network_{{network.id}}">
-                  <td>{{ network.status }}</td>
+                  <td>{{ macros.render_network_state(network.status) }}</td>
                   <td>{{ network.name }}</td>
                   <td>{{ network.preset.name }}</td>
                   <td><code>{{ network.get_connection_command(current_user) }}</code></td>

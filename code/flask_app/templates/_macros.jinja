@@ -67,6 +67,29 @@
 {% endif %}
 {% endmacro %}
 
+
+{% macro render_network_state(state) %}
+  {% if state == "running" %}
+  <span class="badge badge-pill bg-success" data-toggle="tooltip" data-placement="right" title="Container is running.">
+    Running
+  </span>
+  {% elif state == "restarting" %}
+  <span class="badge badge-pill bg-warning" data-toggle="tooltip" data-placement="right" title="Container is restarting.">
+    Restarting
+  </span>
+
+    {% elif state == "starting" %}
+  <span class="badge badge-pill bg-warning" data-toggle="tooltip" data-placement="right" title="Container is restarting.">
+    Starting
+  </span>
+
+  {% elif state == "error" %}
+  <span class="badge badge-pill bg-danger" data-toggle="tooltip" data-placement="right" title="Container exited.">
+    Error
+  </span>
+  {% endif %}
+{% endmacro %}
+
 {% macro render_container_state(state)%}
 {% if state == "running" %}
 <span class="badge badge-pill bg-success" data-toggle="tooltip" data-placement="right" title="Container is running.">
