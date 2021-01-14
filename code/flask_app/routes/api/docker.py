@@ -69,7 +69,7 @@ def start_network(id):
     assign_users = []
     assign_groups_ids = json_data["assign_groups"]
     assign_groups = []
-    netork_name = json_data["network_name"]
+    network_name = json_data["network_name"]
 
     for user_id in assign_users_ids:
       assign_users.append(User.get_user_by_id(user_id))
@@ -79,9 +79,44 @@ def start_network(id):
     network = preset.create_network(
       assign_users=assign_users,
       assign_groups=assign_groups,
-      name=netork_name
+      name=network_name
       )
     return (network.get_json(), 200)
+  except Exception as err:
+    return (str(err), 500)
+
+@docker_api_bp.route('/networkpresets/<int:id>/start_multiple', methods=['POST'])
+@login_required
+@roles_required("admin")
+def start_muiltiple_networks(id):
+  try:
+    preset = NetworkPreset.get_network_preset_by_id(id)
+    json_data = request.get_json()
+    assign_users_ids = json_data["assign_users"]
+    assign_users = []
+    assign_groups_ids = json_data["assign_groups"]
+    assign_groups = []
+    network_name = json_data["network_name"]
+    networks_json = []
+
+    for user_id in assign_users_ids:
+      user = User.get_user_by_id(user_id)
+      network = preset.create_network(
+        assign_users=[user],
+        name=f"{network_name}_{user.username}".replace(" ","_")
+      )
+      networks_json.append(network.get_json())
+
+    for group_id in assign_groups_ids:
+      group = Group.get_group_by_id(group_id)
+      network = preset.create_network(
+        assign_groups=[group],
+        name=f"{network_name}_{group.name}".replace(" ","_")
+      )
+      networks_json.append(network.get_json())
+
+    
+    return (jsonify(networks_json), 200)
   except Exception as err:
     return (str(err), 500)
 

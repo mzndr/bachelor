@@ -17,6 +17,16 @@ class Api{
     Api.postDataAsJson(api_route,data,callback)
   }
 
+  static startMultipleNetworksFromPreset(presetId,name,groupIds,userIds,callback){
+    let api_route = Flask.url_for("docker_api.start_muiltiple_networks",{"id":presetId})
+    let data = {
+      "network_name":name,
+      "assign_users":userIds,
+      "assign_groups":groupIds
+    }
+    Api.postDataAsJson(api_route,data,callback)
+  }
+
   static restartNetwork(id,callback){
     let api_route = Flask.url_for("docker_api.restart_network",{"id":id})
     $.get(api_route,(data)=>{

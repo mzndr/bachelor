@@ -89,36 +89,66 @@ class StartNetwork{
     let $name = $(`#${id}_network_name`)
     let $usersField = $(`#${id}_assign_users`)
     let $groupsField = $(`#${id}_assign_groups`)
+
+    let $createMultipleField = $(`#${id}_create_for_everyone`)
     let name = $name.val()
     let userIds = $usersField.val()
     let groupIds = $groupsField.val()
     let original_icon = $button.html();
-    
+    if($createMultipleField.prop('checked')){
+      console.log("CREATING MULTIPLE")
+      Api.startMultipleNetworksFromPreset(
+        id,
+        name,
+        groupIds,
+        userIds,
+        (response,error)=>{
+          $("#modalstart_" + id).modal('hide')
+          $button.html(original_icon)
+          if (error){
+            if (response.status == 0){
+              Messaging.createMessage("Networks created!","success")
+            } 
+            else
+            {
+              Messaging.apiResponseToMessage(response)
+            }
+          }else{
+            Messaging.createMessage("Networks created!","success")
+          }
+          NetworkRendering.fetchNetworks()
+        }
+      )
+    }
+    else
+    {
+      Api.startNetworkFromPreset(
+        id,
+        name,
+        groupIds,
+        userIds,
+        (response,error)=>{
+          $("#modalstart_" + id).modal('hide')
+          $button.html(original_icon)
+          if (error){
+            if (response.status == 0){
+              Messaging.createMessage("Network created!","success")
+            } 
+            else
+            {
+              Messaging.apiResponseToMessage(response)
+            }
+          }else{
+            Messaging.createMessage("Network created!","success")
+          }
+          NetworkRendering.fetchNetworks()
+        }
+      )
+    }
     
     $button.html(loading_icon)
 
-    Api.startNetworkFromPreset(
-      id,
-      name,
-      groupIds,
-      userIds,
-      (response,error)=>{
-        $("#modalstart_" + id).modal('hide')
-        $button.html(original_icon)
-        if (error){
-          if (response.status == 0){
-            Messaging.createMessage("Network created!","success")
-          } 
-          else
-          {
-            Messaging.apiResponseToMessage(response)
-          }
-        }else{
-          Messaging.createMessage("Network created!","success")
-        }
-        NetworkRendering.fetchNetworks()
-      }
-    )
+    
     
     
 
