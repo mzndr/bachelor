@@ -17,7 +17,7 @@
     {% for network in current_user.get_assigned_networks() %}
       <div class="row">
         <div class = "col">
-            {% call macros.create_card(title=network.name) %}
+            {% call macros.create_card(title=network.get_clean_name()) %}
             <div class="row">
               <div class="col">
                 <strong>Command:</strong><code>{{ network.get_connection_command(current_user) }}</code>

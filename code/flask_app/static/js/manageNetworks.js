@@ -116,6 +116,7 @@ class StartNetwork{
         }else{
           Messaging.createMessage("Network created!","success")
         }
+        NetworkRendering.fetchNetworks()
       }
     )
     
@@ -129,13 +130,13 @@ class ManageNetwork{
   static deleteNetwork(id,button){
     let $button = $(button)
     let original_icon = $button.html();
-    let $tr = $("#network_" + id)
     $button.html(loading_icon)
     Api.deleteNetwork(id,(response)=>{
-      $button.html(original_icon)
-      $tr.hide()
+      
 
+      NetworkRendering.removeNetwork("network_" + id)
       Messaging.createMessage("Deleted network","success")
+      $button.html(original_icon)
     })
   }
 
@@ -145,22 +146,167 @@ class ManageNetwork{
 
     $button.html(loading_icon)
     Api.restartNetwork(id,(response)=>{
+      NetworkRendering.fetchNetworks()
       $button.html(original_icon)
-      Messaging.createMessage("Restarted network","success")
+      Messaging.createMessage("Restarting network...","success")
     })
   }
 }
 
 
+class NetworkRendering{
+  
+  static fetchNetworks()
+  {
+    let $table = $("#running_networks_rows")
+
+    Api.getAllNetworks((data)=>{
+      for (let network of data){
+        let found = false
+        $table.children("tr").each(function(i){
+          let rowId = $(this).attr("id")
+          if(rowId == `network_${network.id}`)
+          {
+
+            NetworkRendering.replaceNetwork(rowId,network)
+            found = true
+          }
+
+        })
+        if(!found){
+          NetworkRendering.appendNetwork(network)
+        }
+      }
+
+    })
+  }
+
+  static clearTable(){
+    $("#running_networks_rows").html("")
+  }
+
+  static replaceNetwork(row_id,network_json){
+    let $row = $(`#${row_id}`)
+    let array = NetworkRendering.getNetworkRowArray(network_json)
+    networktable.row(`#${row_id}`).data(array).draw()
+  }
+
+  static removeNetwork(row_id){
+    networktable.row(`#${row_id}`).remove().draw()
+  }
+
+  static appendNetwork(network_json){
+    
+    let row_html = NetworkRendering.getNetworkRowHtml(network_json)
+    networktable.row.add($(row_html)).draw().node();
+  }
+
+  static getStatusBadge(status){
+    
+    let color;
+    let tooltip;
+
+    switch (status) {
+      case "running":
+        color = "bg-success"
+        tooltip = "Network is running!"
+        break;
+      case "starting":
+        color = "bg-warning"
+        tooltip = "Network is starting..."
+        break;
+      case "error":
+        color = "bg-danger"
+        tooltip = "Something went wrong while starting the network :("
+        break;
+      default:
+        color = "bg-info"
+        tooltip = "unknown network state"
+        break;
+    }
+
+    let badge = `
+    <span class="badge badge-pill ${color}" data-toggle="tooltip" data-placement="right" title="${tooltip}">
+    ${status}
+    </span>
+    `
+    return badge
+  }
+  
+  static getNetworkRowArray(network_json)
+  {
+    let id = network_json.id;
+    let status = network_json.status;
+    let name = network_json.clean_name;
+    let presetName = network_json.preset;
+    let command = network_json.command;
+    let details_url =  Flask.url_for("networks.network_details",{"id":id});
+    
+    
+    let array = [
+      `${NetworkRendering.getStatusBadge(status)}`,
+      `${name}`,
+      `${presetName}`,
+      `<span class="copy-span elevation-1"><code>${command}</code><button class="btn btn-primary btn-xs ml-2" onclick="copyToClipborad('${command}')"><i class="far fa-copy"></i></button></span>`,
+      `<button class="btn btn-danger control-button" onclick="ManageNetwork.deleteNetwork('${id}', this)"><i class="fas fa-trash-alt"></i></button>
+      <button class="btn btn-warning control-button" onclick="ManageNetwork.restartNetwork('${id}', this)"><i class="fas fa-redo-alt"></i></button>
+      <button class="btn btn-primary" onclick="window.location=\`${details_url}\`">
+        <i class="fas fa-info-circle mr-1"></i>
+        Details
+      </button>`
+    ] 
+    
+    
+    return array
+  
+  }
+
+  static getNetworkRowHtml(network_json)
+  {
+    console.log(network_json)
+    let id = network_json.id;
+    let status = network_json.status;
+    let name = network_json.clean_name;
+    let presetName = network_json.preset;
+    let command = network_json.command;
+    let details_url =  Flask.url_for("networks.network_details",{"id":id});
+    
+    
+    let table_row = `
+    <tr id="network_${id}" role="row">
+    <td>
+      ${NetworkRendering.getStatusBadge(status)}
+  
+    </td>
+      <td>${name}</td>
+      <td>${presetName}</td>
+      <td><span class="copy-span elevation-1"><code>${command}</code><button class="btn btn-primary btn-xs ml-2" onclick="copyToClipborad('${command}')"><i class="far fa-copy"></i></button></span></td>
+      <td>
+        <button class="btn btn-danger control-button" onclick="ManageNetwork.deleteNetwork('${id}', this)"><i class="fas fa-trash-alt"></i></button>
+        <button class="btn btn-warning control-button" onclick="ManageNetwork.restartNetwork('${id}', this)"><i class="fas fa-redo-alt"></i></button>
+        <button class="btn btn-primary" onclick="window.location=\`${details_url}\`">
+          <i class="fas fa-info-circle mr-1"></i>
+          Details
+        </button>
+      </td>
+    </tr>
+  `
+    return table_row
+  
+  }
+}
 
 
 
-
+let networktable;
 
 $(document).ready(()=>{
   CreatePreset.loadAvailableImages()
   StartNetwork.loadGroupsAndUsers()
+  NetworkRendering.fetchNetworks()
 
-  $("#networktable").DataTable()
+  window.setInterval(()=>{NetworkRendering.fetchNetworks()}, 5000);
+
+  networktable = $("#networktable").DataTable()
   $("#presettable").DataTable()
 })

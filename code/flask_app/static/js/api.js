@@ -24,8 +24,23 @@ class Api{
     })
   }
 
+  static getConnectionCommand(id,callback)
+  {
+    let api_route = Flask.url_for("docker_api.get_network_vpn_data",{"id":id})
+    $.get(api_route,(data)=>{
+      callback(data)
+    })  
+  }
+
   static getNetwork(id,callback){
     let api_route = Flask.url_for("docker_api.get_network_by_id",{"id":id})
+    $.get(api_route,(data)=>{
+      callback(data)
+    })
+  }
+
+  static getAllNetworks(callback){
+    let api_route = Flask.url_for("docker_api.get_all_networks")
     $.get(api_route,(data)=>{
       callback(data)
     })

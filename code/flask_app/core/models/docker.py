@@ -11,6 +11,8 @@ from distutils.dir_util import copy_tree
 from flask import abort, current_app
 from flask_app.core import utils
 from flask_app.core.exceptions import docker as errors
+from flask_app.core.models.core import BaseModel
+from flask_security import current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
@@ -37,8 +39,7 @@ network_groups = db.Table('network_groups',
 
 docker_client = docker.from_env()        
 ### Container Management ###
-class Container(db.Model):
-  id = db.Column(db.Integer(), primary_key=True, nullable=False)
+class Container(BaseModel):
   name = db.Column(db.String(255), unique=True, nullable=False)
   files_location = db.Column(db.String(1024), unique=True, nullable=False)
   docker_id = db.Column(db.String(255), unique=True)
@@ -69,19 +70,23 @@ class Container(db.Model):
 
   def read_properties(self,key=None):
     path = os.path.join(self.files_location,"properties.json")
-    with open(path) as json_file:
-      str_data = json_file.read()
-      if self.ip != None:
-        str_data = str_data.replace("[! container_ip !]",self.ip)
-      data = json.loads(str_data)
+    try:
+      with open(path) as json_file:
+        str_data = json_file.read()
+        if self.ip != None:
+          str_data = str_data.replace("[! container_ip !]",self.ip)
+        data = json.loads(str_data)
 
-      if key != None:
-        try:
-          return data[key]
-        except:
-          return None
+        if key != None:
+          try:
+            return data[key]
+          except:
+            return None
 
-      return data
+        return data
+    except:
+      current_app.logger.warning("Couldn't read properties of at " + path )
+      return "error"
 
   def stop(self):
     try:
@@ -92,10 +97,14 @@ class Container(db.Model):
     try:
       shutil.rmtree(self.files_location)
     except:
+      current_app.logger.warning(f"Couldn't delete {self.files_location}")
       pass
 
+    for flag in self.flags:
+      flag.delete()
+
     db.session.delete(self)
-    db.session.flush()
+    db.session.commit()
 
   def get_json(self):
     json = {
@@ -109,15 +118,18 @@ class Container(db.Model):
     }
     return json
 
-  def restart(self):
-    container = self.get_container_object()
-    container.restart()
+  def delete(self):
+    self.stop()
 
   def get_container_object(self):
     """Returns the container object of the docker sdk"""
-    container_object = docker_client.containers.get(self.name)
-    container_object.reload() # Also tell docker-daemon to fetch current information about the container. 
-    return container_object
+    try:
+      container_object = docker_client.containers.get(self.name)
+      container_object.reload() # Also tell docker-daemon to fetch current information about the container. 
+      return container_object
+    except docker.errors.NotFound:
+      current_app.logger.warning("Requested docker container of " + str(self) + "was not found.")
+      return None
 
   def place_flags(self):
     flag_regex = r'(\[\#\ )+([a-z,A-Z,0-9,_])+(\ \#\])'
@@ -261,7 +273,7 @@ class Container(db.Model):
       with open(key_location,"w") as key_file:
         key_file.write(user.vpn_key)
 
-    port = Network.get_available_port()
+    port = network.vpn_port
     vpn_container = Container.create_detatched_container(
       vpn_image,
       network,
@@ -330,9 +342,8 @@ class Container(db.Model):
       if "vitsl" in container.name:
         container.kill()
 
-class ContainerImage(db.Model):
+class ContainerImage(BaseModel):
   """Model for holding a container image name"""
-  id = db.Column(db.Integer(), primary_key=True)  
   name = db.Column(db.String(255)) 
   network_preset_id = db.Column(
     db.Integer, 
@@ -385,11 +396,9 @@ class ContainerImage(db.Model):
 
     return ret
   
-
 ### Network Management ###
-class NetworkPreset(db.Model):
+class NetworkPreset(BaseModel):
   """Model for holding a network preset"""
-  id = db.Column(db.Integer(), primary_key=True)  
   name = db.Column(db.String(255), unique=True)
   networks = db.relationship("Network",backref="preset")
   container_images = db.relationship(
@@ -478,14 +487,13 @@ class NetworkPreset(db.Model):
     return preset
 
 
-
 NETWORK_STATUS_RUNNING = "running"
 NETWORK_STATUS_STARTING = "starting"
 NETWORK_STATUS_RESTARTING = "restarting"
 NETWORK_STATUS_ERROR = "error"
-class Network(db.Model):
+class Network(BaseModel):
   """Model for a running network"""
-  id = db.Column(db.Integer(), primary_key=True)
+
   vpn_port = db.Column(db.Integer(), unique=True)
   gateway = db.Column(db.String(16))
   subnet = db.Column(db.String(16))
@@ -555,14 +563,12 @@ class Network(db.Model):
     
   def is_network_ready(self):
     """Checks if all containers are running"""
-    for container in self.containers:
-      if container.get_status() != CONTAINER_STATE_RUNNING:
-        return False
-    return True
+    return self.status == NETWORK_STATUS_RUNNING
 
   def get_json(self):
     json = {
       "id": self.id,
+      "clean_name": self.get_clean_name(),
       "name": self.name,
       "ready": self.is_network_ready(),
       "gateway": self.gateway,
@@ -571,7 +577,10 @@ class Network(db.Model):
       "containers": [],
       "flags":[],
       "next_hint":self.get_next_hint_time(),
-      "hosts_file": self.get_hosts_file_lines()
+      "hosts_file": self.get_hosts_file_lines(),
+      "status": self.status,
+      "preset": self.preset.name,
+      "command": self.get_connection_command(current_user)
     }
 
     for flag in self.flags:
@@ -595,8 +604,38 @@ class Network(db.Model):
     return lines
 
   def restart(self):
+    container_image_names = []
+
+    self.vpn_port = Network.get_available_port()
+    self.status = CONTAINER_STATE_RESTARTING
+    db.session.add(self)
+    db.session.commit()
+
+    #get image names
+    for image in self.preset.container_images:
+      container_image_names.append(image.name)
+
     for container in self.containers:
-      container.restart()
+      container.stop()
+
+    self.vpn_port = Network.get_available_port()
+    self.status = CONTAINER_STATE_RESTARTING
+
+
+    #network_db.start_containers(container_image_names)
+    worker_thread = threading.Thread(
+      target=Network.start_containers,
+      args=(
+        self.name,
+        container_image_names,
+        current_app._get_current_object(),
+        )
+      )
+    worker_thread.start()
+    return self
+
+  def network_is_ready(self):
+    return self.status == NETWORK_STATUS_RUNNING
 
   def user_allowed_to_access(self,user):
     return user in self.assigned_users or user.group in self.assigned_groups or user.has_role("admin")
@@ -617,6 +656,10 @@ class Network(db.Model):
     )
 
     return str(flag)
+
+  def stop_all_containers(self):
+    for container in self.containers:
+      container.stop()
 
   def get_flags(self):
     return self.flags
@@ -653,10 +696,18 @@ class Network(db.Model):
     ip = current_app.config["PUBLIC_IP"]
     port = self.vpn_port
 
-    if self.status != NETWORK_STATUS_RUNNING:
+    if self.status == NETWORK_STATUS_STARTING:
       return "Network is still starting..."
+    elif self.status == NETWORK_STATUS_RESTARTING:
+      return "Network is still restarting..."
+    elif self.status == NETWORK_STATUS_ERROR:
+      return "There was an error starting the network..."
+
     command = f"sudo openvpn --config ~/{user.username}.ovpn --remote {ip} {port} udp"
     return command
+
+  def get_clean_name(self):
+    return self.name.replace(current_app.config["APP_PREFIX"],"")
 
   ### STATIC METHODS ###
   @staticmethod 
@@ -681,9 +732,9 @@ class Network(db.Model):
   @staticmethod
   def start_containers(network_name,container_image_names,app):
     with app.app_context():
-      
+      session = db.create_scoped_session()
       try:
-        session = db.create_scoped_session()
+        
         network = session.query(Network).filter(Network.name == network_name).first()
 
         vpn_container = Container.create_vpn_container(network)
@@ -702,13 +753,14 @@ class Network(db.Model):
 
       except Exception as err:
         network.status = NETWORK_STATUS_ERROR
-        print(err)
+        session.commit()
+        current_app.logger.error(err)
         raise err
       
 
   @staticmethod
   def create_network(network_name,container_image_names,assign_users = [], assign_groups = [],preset=None):
-    
+    network_name = current_app.config["APP_PREFIX"] + network_name
     if not utils.is_valid_docker_name(network_name):
       raise errors.InvalidNetworkNameException(network_name)
     network = None
@@ -724,7 +776,8 @@ class Network(db.Model):
       assign_users = utils.remove_duplicates_from_list(assign_users)
       assign_groups = utils.remove_duplicates_from_list(assign_groups)
 
-      
+        
+
 
       network_db = Network(
         name=network_name,
@@ -733,8 +786,10 @@ class Network(db.Model):
         assigned_groups=assign_groups,
         preset=preset,
         subnet=subnet,
-        status=NETWORK_STATUS_STARTING
+        status=NETWORK_STATUS_STARTING,
+        vpn_port=Network.get_available_port()
       )
+      
       db.session.add(network_db)
       db.session.commit()
 
@@ -790,8 +845,9 @@ class Network(db.Model):
 
     raise errors.NoPortsAvailableException()
 
-class Flag(db.Model):
-  id = db.Column(db.Integer(), primary_key=True)
+class Flag(BaseModel):
+
+
   name = db.Column(db.String(32))
   code = db.Column(db.String(64), unique=True)
   network_id = db.Column(db.Integer, db.ForeignKey('network.id'))
@@ -812,6 +868,7 @@ class Flag(db.Model):
       "next_hint": self.network.get_next_hint_time()
       
     }
+  
     hints_left = len(self.get_hints()) - len(self.get_revealed_hints())
 
     json["hints_left"] = hints_left
@@ -833,6 +890,8 @@ class Flag(db.Model):
     db.session.commit()
 
   def get_description(self):
+    if self.container == None:
+      return None
     return self.container.read_properties()["flags"][self.name]["description"]
 
 
@@ -866,6 +925,8 @@ class Flag(db.Model):
     return ret
 
   def get_hints(self):
+    if self.container == None:
+      return []
     return self.container.read_properties()["flags"][self.name]["hints"]
 
   @staticmethod

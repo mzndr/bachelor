@@ -5,6 +5,7 @@ import uuid
 import flask_app.core.exceptions.user as user_errors
 from flask import current_app, flash, url_for
 from flask_app.core.db import db
+from flask_app.core.models.core import BaseModel
 from flask_app.core.models.docker import Container, Network, NetworkPreset
 from flask_security import RoleMixin, UserMixin
 from flask_security.utils import hash_password
@@ -15,8 +16,7 @@ roles_users = db.Table('roles_users',
         db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
 
   
-class User(db.Model, UserMixin):
-  id = db.Column(db.Integer, primary_key=True)
+class User(BaseModel, UserMixin):
   username = db.Column(db.String(255), unique=True)
   email = db.Column(db.String(255), unique=True)
   password = db.Column(db.String(255))
@@ -185,8 +185,7 @@ class User(db.Model, UserMixin):
     return True
 
 
-class Role(db.Model, RoleMixin):
-  id = db.Column(db.Integer(), primary_key=True)
+class Role(BaseModel, RoleMixin):
   name = db.Column(db.String(80), unique=True)
   description = db.Column(db.String(255))
   
@@ -222,8 +221,7 @@ class Role(db.Model, RoleMixin):
     db.session.commit()
     return role
 
-class Group(db.Model):
-  id = db.Column(db.Integer, primary_key=True)
+class Group(BaseModel):
   invite_code = db.Column(db.String(64), unique=True)
   name = db.Column(db.String(128), unique=True)
   users = db.relationship("User",backref="group")

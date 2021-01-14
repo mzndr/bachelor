@@ -124,8 +124,7 @@ def restart_network(id):
   if network == None:
     return {"error":"network not found"},404
   network.restart()
-  json = network.get_json()
-  return json
+  return jsonify(network.get_json())
 
 @docker_api_bp.route('/networks/', methods=['GET'])
 @login_required
