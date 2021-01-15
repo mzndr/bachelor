@@ -51,8 +51,6 @@ class Container(BaseModel):
   def update_hosts_file(self):
     file_lines = self.network.get_hosts_file_lines()
 
-    current_app.logger.info(f"Updating hosts file of {self.name}")
-
     for line in file_lines:
       cmd = f'echo {line} >> /etc/hosts'
       self.exec_command(cmd)
@@ -66,7 +64,11 @@ class Container(BaseModel):
         )
 
   def get_status(self):
-    return str(self.get_container_object().status)
+    try:
+      return   str(self.get_container_object().status)
+    except:
+      return "not existing"
+    
 
   def read_properties(self,key=None):
     path = os.path.join(self.files_location,"properties.json")
@@ -102,9 +104,12 @@ class Container(BaseModel):
 
     for flag in self.flags:
       flag.delete()
-
+    
+    docker_client.images.prune()
+    container_name = self.name
     db.session.delete(self)
     db.session.commit()
+    current_app.logger.info("Stopped container: " + container_name)
 
   def get_json(self):
     json = {
@@ -203,7 +208,7 @@ class Container(BaseModel):
       data_path = existing_location
     
     # generate random name with network name as prefix
-    container_name = f"{current_app.config['APP_PREFIX']}_{network.name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
+    container_name = f"{network.name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
     if not utils.is_valid_docker_name(container_name):
       raise errors.InvalidContainerNameException(container_name)
 
@@ -220,7 +225,8 @@ class Container(BaseModel):
     image, logs = docker_client.images.build(
       path=data_path,
       nocache=True,
-      forcerm=True
+      forcerm=True,
+      tag=container_name.lower()
     )
 
     container = docker_client.containers.run(
@@ -240,7 +246,7 @@ class Container(BaseModel):
 
     container_db.docker_id = container.id
     container_db.ip = container.attrs["NetworkSettings"]["Networks"][network.name]["IPAddress"]
-
+    current_app.logger.info("Started container: " + container_name)
     return container_db
   
   @staticmethod
@@ -337,10 +343,10 @@ class Container(BaseModel):
 
   @staticmethod
   def cleanup():
-    docker_client.images.prune()
     for container in docker_client.containers.list():
-      if "vitsl" in container.name:
+      if current_app.config["APP_PREFIX"] in container.name:
         container.kill()
+    docker_client.images.prune()
 
 class ContainerImage(BaseModel):
   """Model for holding a container image name"""
@@ -416,8 +422,10 @@ class NetworkPreset(BaseModel):
     return json
 
   def delete(self):
+    name = self.name
     db.session.delete(self)
     db.session.commit()
+    current_app.logger.info("Deleted preset: " + name)
 
   def create_network(self,name,assign_users=[],assign_groups=[]):
     """Creates a network from the preset"""
@@ -689,8 +697,11 @@ class Network(BaseModel):
     for flag in self.flags:
       flag.delete()
 
+    network_name = self.name
+
     db.session.delete(self)
     db.session.commit()
+    current_app.logger.info("Deleted network: " + network_name)
 
   def get_connection_command(self,user):
     ip = current_app.config["PUBLIC_IP"]
@@ -764,6 +775,7 @@ class Network(BaseModel):
     if not utils.is_valid_docker_name(network_name):
       raise errors.InvalidNetworkNameException(network_name)
     network = None
+    current_app.logger.info("Starting network: " + network_name)
     try:
   
       network = docker_client.networks.create(
@@ -806,7 +818,7 @@ class Network(BaseModel):
         )
       worker_thread.start()
 
-      
+      current_app.logger.info("Created network: " + network_name)
       return network_db
     except Exception as err:
       # If we fail somewhere during the creation process
@@ -825,6 +837,14 @@ class Network(BaseModel):
   def cleanup():
     for network in Network.get_all_networks():
       network.delete()
+
+    for network in docker_client.networks.list():
+      if current_app.config["APP_PREFIX"] in network.name:
+        for container in network.containers:
+          container.kill()
+        network.remove()
+
+
     docker_client.networks.prune()
 
   @staticmethod
@@ -888,6 +908,7 @@ class Flag(BaseModel):
   def delete(self):
     db.session.delete(self)
     db.session.commit()
+
 
   def get_description(self):
     if self.container == None:
