@@ -703,7 +703,7 @@ class Network(BaseModel):
     elif self.status == NETWORK_STATUS_ERROR:
       return "There was an error starting the network..."
 
-    command = f"sudo openvpn --config ~/{user.username}.ovpn --remote {ip} {port} udp"
+    command = f"sudo openvpn --config ~/{user.username}.ovpn --remote {ip} {port} tcp"
     return command
 
   def get_clean_name(self):
