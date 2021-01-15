@@ -278,7 +278,7 @@ class Container(BaseModel):
       vpn_image,
       network,
       existing_location=data_path,
-      ports={"1194/udp":port},              
+      ports={"1194/tcp":port},              
       cap_add="NET_ADMIN",
       privileged=True
       )
@@ -707,7 +707,7 @@ class Network(BaseModel):
     return command
 
   def get_clean_name(self):
-    return self.name.replace(current_app.config["APP_PREFIX"],"")
+    return self.name.replace(current_app.config["APP_PREFIX"] + "_","")
 
   ### STATIC METHODS ###
   @staticmethod 
@@ -739,7 +739,7 @@ class Network(BaseModel):
 
         vpn_container = Container.create_vpn_container(network)
         vpn_container_object = vpn_container.get_container_object()
-        network.vpn_port = vpn_container_object.ports['1194/udp'][0]['HostPort']
+        network.vpn_port = vpn_container_object.ports['1194/tcp'][0]['HostPort']
 
         for container_folder in container_image_names:
           Container.create_detatched_container(container_folder,network)
@@ -760,7 +760,7 @@ class Network(BaseModel):
 
   @staticmethod
   def create_network(network_name,container_image_names,assign_users = [], assign_groups = [],preset=None):
-    network_name = current_app.config["APP_PREFIX"] + network_name
+    network_name = current_app.config["APP_PREFIX"] +"_"+ network_name
     if not utils.is_valid_docker_name(network_name):
       raise errors.InvalidNetworkNameException(network_name)
     network = None

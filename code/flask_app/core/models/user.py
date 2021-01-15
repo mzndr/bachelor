@@ -43,6 +43,9 @@ class User(BaseModel, UserMixin):
       total = total + len(network.get_flags())
     if len(networks)  == 0:
       return 100
+    
+    if total == 0:
+      return 100
     percentage = (completed / total) * 100
     return percentage
 
