@@ -1,0 +1,4 @@
+FROM kylemanna/openvpn
+ENV EASYRSA_PASSIN="pass:123456"
+WORKDIR /etc/ovpn
+COPY ./scripts/create_client_files.sh .

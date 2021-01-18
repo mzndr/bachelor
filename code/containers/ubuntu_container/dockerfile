@@ -1,2 +1,9 @@
 FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -yqq \
+    iputils-ping \
+    wget \
+    w3m
+
+
 ENTRYPOINT ["tail", "-f", "/dev/null"]
