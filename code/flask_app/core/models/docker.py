@@ -305,6 +305,7 @@ class Container(BaseModel):
       nocache=True,
     )
 
+
     # generate random name
     container_name = f"{current_app.config['APP_PREFIX']}_{secure_filename(folder_name)}-{user.username}_{str(uuid.uuid4()).split('-')[0]}"
     output = docker_client.containers.run(
@@ -312,14 +313,14 @@ class Container(BaseModel):
       remove=True,
       detach=False,
       name=container_name,
-      privileged=True,
       ports=None,
-      cap_add="NET_ADMIN",
       command=crt_command,
       stdout=True,
       stderr=True,
       volumes={vpn_data_path:{"bind":"/etc/openvpn","mode":"rw"}}           
     )
+
+    
 
     user_crt_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.crt")
     user_crt = None
@@ -338,6 +339,13 @@ class Container(BaseModel):
       user_cfg = user_cfg.replace("dev","dev tun").replace("remote ","") 
 
     shutil.rmtree(location)
+
+    
+
+    # cleanup created volumes TODO: Do it properly.
+    docker_client.containers.prune()
+    docker_client.volumes.prune()
+
 
     return user_crt, user_key, user_cfg
 
