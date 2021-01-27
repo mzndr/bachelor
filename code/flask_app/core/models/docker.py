@@ -294,41 +294,6 @@ class Container(BaseModel):
 
     users = utils.remove_duplicates_from_list(users)
     
-    # Place network info in openvpn config and scripts
-    gateway = network.gateway
-    gateway_octetts = gateway.split(".")
-    containter_octett = str(int(gateway_octetts[3]) + 1)
-    container_ip = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.{containter_octett}" 
-    network_netmask = "255.255.0.0"
-    network_ip = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.0" 
-    network_broadcast = f"{gateway_octetts[0]}.{gateway_octetts[1]}.255.255" 
-    vpn_pool_start = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.50" 
-    vpn_pool_end = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.64" 
-
-
-    config_location = os.path.join(vpn_files, f"openvpn.conf")
-    bridge_start_location = os.path.join(vpn_files, f"../scripts/bridge-start.sh")
-
-
-    with open(config_location) as f:
-      replaced = f.read().replace('[! container_ip !]', container_ip)
-      replaced = replaced.replace('[! network_netmask !]',network_netmask)
-      replaced = replaced.replace('[! network_address !]',network_ip)
-      replaced = replaced.replace('[! network_broadcast !]',network_broadcast)
-      replaced = replaced.replace('[! vpn_pool_start !]',vpn_pool_start)
-      replaced = replaced.replace('[! vpn_pool_end !]',vpn_pool_end)
-    with open(config_location, "w") as f:
-      f.write(replaced)
-
-    with open(bridge_start_location) as f:
-      replaced = f.read().replace('[! container_ip !]', container_ip)
-      replaced = replaced.replace('[! network_netmask !]',network_netmask)
-      replaced = replaced.replace('[! network_broadcast !]',network_broadcast)
-      replaced = replaced.replace('[! vpn_pool_start !]',vpn_pool_start)
-      replaced = replaced.replace('[! vpn_pool_end !]',vpn_pool_end)
-    with open(bridge_start_location, "w") as f:
-      f.write(replaced)
-
     # Copy user authentication files into vpn
     for user in users:
       crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
@@ -340,13 +305,13 @@ class Container(BaseModel):
         key_file.write(user.vpn_key)
 
 
+    # Actually start the container
     port = network.vpn_port
     vpn_container = Container.create_detatched_container(
       vpn_image,
       network,
       existing_location=data_path,
-      ports={"1194/tcp": port},              
-      cap_add="NET_ADMIN",
+      ports={"1194/tcp": port},    # Map the port of container          
       privileged=True
       )
 
