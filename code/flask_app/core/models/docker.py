@@ -360,15 +360,16 @@ class Container(BaseModel):
     data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
     location = Container.create_container_dir(folder_name,"vpn_crt_cfg_gen_")
 
+    # generate random name
+    container_name = f"{current_app.config['APP_PREFIX']}_{secure_filename(folder_name)}-{user.username}_{str(uuid.uuid4()).split('-')[0]}"
     vpn_data_path = os.path.join(location,"data")
     image, logs = docker_client.images.build(
       path=location,
       nocache=True,
+      tag=container_name
     )
 
 
-    # generate random name
-    container_name = f"{current_app.config['APP_PREFIX']}_{secure_filename(folder_name)}-{user.username}_{str(uuid.uuid4()).split('-')[0]}"
     output = docker_client.containers.run(
       image=image,
       remove=True,
@@ -401,6 +402,7 @@ class Container(BaseModel):
 
     shutil.rmtree(location)
 
+    docker_client.images.remove(container_name, force=True)
     
     return user_crt, user_key, user_cfg
 
