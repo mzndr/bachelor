@@ -1,4 +1,0 @@
-FROM tleemcjr/metasploitable2
-ENTRYPOINT ["tail", "-f", "/dev/null"]
-CMD [ "sh -c '/bin/services.sh && bash'" ]
-

@@ -27,11 +27,39 @@
         </div>
       </div>
 
+
+
       {% if current_user.has_role("admin")%}
         {% include "network_details_admin_zone.jinja" %}
       {% endif %}
 
       <div class="row">
+          <div class="col">
+            <h3>Container Info</h3>
+            {% call macros.create_card(title="Network Container Info") %}
+               <table class="table table-dark elevation-2 mb-3">
+                <thead>
+                  <tr>
+                    <th>Container Description</th>
+                    <th>Container IP</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for container in network.containers %}
+                    {% if container.read_properties().show_info %}
+                      <tr>
+                        <td>{{ container.read_properties().description}}</td>
+                        <td>{{ container.ip }}</td>
+                      </tr>
+                    {% endif %}
+                  {% endfor %}
+                </table>
+            {% endcall%}
+          </div>
+      </div>
+      <!-- /row -->
+
+      <div class="row mb-5">
           <div class="col">
           <h3>Tasks</h3>
           {% for flag in network.get_unredeemed_flags() %}
@@ -63,6 +91,11 @@
                 Redeemed by: {{ flag.redeemed_by.username }}
               {% endif%}
             {% endcall%}
+          {% else %}
+            {% call macros.create_card(title=":(",additional_classes="card-warning") %}
+                There are no tasks for this network.
+            {% endcall%}
+          
           {% endfor %}         
           </div>
         </div>

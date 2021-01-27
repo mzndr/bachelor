@@ -1,4 +1,5 @@
 {
   "description":"Main vpn container for granting access to the network",
+  "show_info":false,
   "hostname":"vpn_container"
 }

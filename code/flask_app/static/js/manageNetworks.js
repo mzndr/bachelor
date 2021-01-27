@@ -335,7 +335,7 @@ $(document).ready(()=>{
   StartNetwork.loadGroupsAndUsers()
   NetworkRendering.fetchNetworks()
 
-  window.setInterval(()=>{NetworkRendering.fetchNetworks()}, 5000);
+  window.setInterval(()=>{NetworkRendering.fetchNetworks()}, 1000);
 
   networktable = $("#networktable").DataTable()
   $("#presettable").DataTable()

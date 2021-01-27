@@ -9,7 +9,7 @@ class Config(object):
   ### APP-SETTINGS ###
   CREATE_TUTORIAL_NETWORK_ON_REGISTRATION = False
   HINT_TIMEOUT = 15
-  VPN_PORT_RANGE = (5100,5200)
+  VPN_PORT_RANGE = (10000,11000)
   RESET_PASSWORD_LENGTH = 8
 
 
@@ -47,7 +47,6 @@ class Config(object):
   SECURITY_MSG_INVALID_PASSWORD = ('Username or password are incorrect.', 'error')
 
   ### SQL-ALCHEMY ###
-  #mysql://ic_user:pZ9yHYZnV3JchsdxpEcNqVknUP5YwwwfMfEjK8b4942vKRwU6g9q748TkdMabw3M@192.168.0.66:3307/issue_collector_master
   #SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'app.db')
   SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:root@localhost:3306/vitsl"
   SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -19,7 +19,11 @@
         <div class = "col">
             {% call macros.create_card(title=network.get_clean_name()) %}
             <div class="row">
-              <div class="col">
+              <div class="col-sm-2">
+                <strong>Status:</strong>{{macros.render_network_state(network.status)}}
+              </div>
+              
+              <div class="col-lg-6">
                 <strong>Command:</strong><code>{{ network.get_connection_command(current_user) }}</code>
               </div>
 
@@ -27,12 +31,11 @@
               <div class="col">
                 <strong>Network:</strong> <code>{{ network.subnet }}</code>
               </div>
-              <div class="col-sm-1">
+              <div class="col">
                 <button class="btn btn-primary float-right mr-2" onclick="window.location=`{{ url_for('networks.network_details',id=network.id) }}`">
                   <i class="fas fa-info-circle mr-1 "></i>
                   Details
                 </button>
-               
               </div>
             </div>
             <div class="row mt-3">

@@ -6,6 +6,7 @@ FROM ubuntu:latest
 RUN apt-get update && apt-get install -yqq \
     ufw \
     openssl \
+    bridge-utils \
     net-tools \
     iptables \
     openvpn \
@@ -15,15 +16,23 @@ WORKDIR /etc/openvpn
 COPY ./data .
 RUN chmod a+x -R . 
 
-COPY ./firewall/before.rules /etc/ufw/
-COPY ./firewall/ufw /etc/default/
+
+
 
 #RUN \
 #echo net.ipv4.ip_forward=1 >> /etc/sysctl.conf & \
 #sysctl -p
 
 COPY ./scripts/easyrsa /usr/share/easy-rsa/easyrsa
+COPY ./scripts/bridge-start.sh .
+COPY ./scripts/start.sh .
+COPY ./scripts/bridge-stop.sh .
+
 RUN ln -s /usr/share/easy-rsa/easyrsa /usr/local/bin
+
+RUN chmod +x ./bridge-start.sh
+RUN chmod +x ./start.sh
+
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV OPENVPN=/etc/openvpn
@@ -35,4 +44,4 @@ ENV EASYRSA=/usr/share/easy-rsa \
 
 
 EXPOSE 1194/udp
-CMD ufw enable & ufw allow 1194/tcp & ufw reload & /etc/init.d/openvpn start & tail -f /dev/null
+CMD ./start.sh

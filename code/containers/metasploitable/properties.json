@@ -1,9 +1,0 @@
-{
-  "description":"Metasploitable container",
-  "hostname":"metasploitable",
-  "flags":{
-    
-  },
-  "ignorefiles":[
-  ]
-}

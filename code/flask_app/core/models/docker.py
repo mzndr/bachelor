@@ -90,17 +90,24 @@ class Container(BaseModel):
       current_app.logger.warning("Couldn't read properties of at " + path )
       return "error"
 
+
+
   def stop(self):
     try:
+
       container = self.get_container_object()
       container.stop()
-    except:
-      pass
+      docker_client.images.remove(self.name, force=True)
+      
+    except Exception as err:
+      current_app.logger.error(str(err))
     try:
       shutil.rmtree(self.files_location)
     except:
       current_app.logger.warning(f"Couldn't delete {self.files_location}")
       pass
+
+
 
     for flag in self.flags:
       flag.delete()
@@ -140,10 +147,18 @@ class Container(BaseModel):
     flag_regex = r'(\[\#\ )+([a-z,A-Z,0-9,_])+(\ \#\])'
     rootdir = self.files_location
 
+    # iterate over all dirs
     for subdir, dirs, files in os.walk(rootdir):
+      # iterate over every file in the current dir
       for file in files:
+        # get the full path to the current file
         filepath = os.path.join(subdir, file)
+
+        # open it in read mode, to search for flag tags
         with open(filepath,"r") as fr:
+          # get the file contents 
+          # and replace the flag tags 
+          # by regex
           f_content = fr.read()
           new_content = re.sub(
             pattern=flag_regex,
@@ -151,6 +166,7 @@ class Container(BaseModel):
             string=f_content
             )
 
+          # Only overwrite the file if it has changed
           if new_content != f_content:
             with open(filepath,"w") as fw:
               fw.write(new_content)
@@ -180,75 +196,82 @@ class Container(BaseModel):
 
   ### STATIC METHODS ###
   @staticmethod 
-  def create_container_dir(folder_name):
+  def create_container_dir(folder_name,container_name):
     data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
-    root_location = tempfile.mkdtemp(prefix=current_app.config["APP_PREFIX"] + "_" + folder_name + "_")
+    root_location = tempfile.mkdtemp(prefix=container_name)
     copy_tree(data_path, root_location)
-
     return root_location
 
   @staticmethod
   def create_detatched_container(
-    folder_name,
-    network,
-    privileged=False,
-    existing_location=None,
+    folder_name,            
+    network,                
+    privileged=False,       
+    existing_location=None, 
     command=None, 
     cap_add=None, 
     ports=None,
     volumes=None
     ):
-    """Creates a container, adds it to the specified network and then runs it.
-    """
 
-    data_path = None
-    if existing_location is None:
-      data_path = Container.create_container_dir(folder_name)
-    else:
-      data_path = existing_location
-    
-    # generate random name with network name as prefix
+    # generate unique name with network and image name as prefix
     container_name = f"{network.name}_{secure_filename(folder_name)}_{str(uuid.uuid4()).split('-')[0]}"
+
+    # check if the name contains invalid characters
     if not utils.is_valid_docker_name(container_name):
       raise errors.InvalidContainerNameException(container_name)
 
-    
+    # Check if an existing location was given
+    data_path = None
+    if existing_location is None:
+      data_path = Container.create_container_dir(folder_name,container_name)
+    else:
+      data_path = existing_location
+
+    # Create database entry to call the place_flags method on
     container_db = Container(
       name=container_name,
       files_location=data_path,
       network = network
-
     )
 
+    # Place flags in the files_location
     container_db.place_flags()
 
+    # Build the image
     image, logs = docker_client.images.build(
       path=data_path,
-      nocache=True,
-      forcerm=True,
-      tag=container_name.lower()
+      nocache=True, # Dont use caching, so the modified files get used
+      forcerm=True, # Remove the image after the container has stopped
+      tag=container_name.lower() # Tag it with the container name, for debugging purposes
     )
 
+    if volumes == None:
+      volumes = {data_path:{"bind":"/container_data","mode":"rw"}}    
 
+    # Actually start the docker container
     container = docker_client.containers.run(
-      image=image,
-      remove=True,
-      detach=True,
-      name=container_name,
-      network=network.name,
-      privileged=privileged,
-      ports=ports,
-      command=command,
-      volumes=volumes,
-      hostname= container_db.read_properties("hostname"),
-      dns=["8.8.8.8"]
+      image=image,            # Use the previously built image
+      remove=True,            # Remove the container after it was stopped
+      detach=True,            # Detatch the container after it was started
+      name=container_name,   
+      network=network.name,   # Assign the container to the network
+      privileged=privileged,  
+      ports=ports,            # Map ports if they were provided
+      command=command,        # Run an alternative command if it was provided
+      volumes=volumes,        # Mount volumes if they were provided
+      hostname= container_db.read_properties("hostname"), # Get the desired hostname from the properties.json
+      dns=["8.8.8.8"]         # Use google dns for now
     )
 
     container.reload() # Let the docker daemon refetch container information
 
+    # Fetch container information from docker and update the database entry
     container_db.docker_id = container.id
     container_db.ip = container.attrs["NetworkSettings"]["Networks"][network.name]["IPAddress"]
     current_app.logger.info("Started container: " + container_name)
+
+    # Return the database entry, still has to be committed
     return container_db
   
   @staticmethod
@@ -258,7 +281,7 @@ class Container(BaseModel):
     vpn_image = "vpn"
     network_name = network.name
     network_id = network.id
-    data_path = Container.create_container_dir(vpn_image)
+    data_path = Container.create_container_dir(vpn_image, network_name + "_vpn_container_")
     vpn_files = os.path.join(data_path,"data")
 
     users = network.assigned_users.copy() # Grant assigned users access
@@ -277,6 +300,7 @@ class Container(BaseModel):
     containter_octett = str(int(gateway_octetts[3]) + 1)
     container_ip = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.{containter_octett}" 
     network_netmask = "255.255.0.0"
+    network_ip = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.0" 
     network_broadcast = f"{gateway_octetts[0]}.{gateway_octetts[1]}.255.255" 
     vpn_pool_start = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.50" 
     vpn_pool_end = f"{gateway_octetts[0]}.{gateway_octetts[1]}.{gateway_octetts[2]}.64" 
@@ -289,6 +313,7 @@ class Container(BaseModel):
     with open(config_location) as f:
       replaced = f.read().replace('[! container_ip !]', container_ip)
       replaced = replaced.replace('[! network_netmask !]',network_netmask)
+      replaced = replaced.replace('[! network_address !]',network_ip)
       replaced = replaced.replace('[! network_broadcast !]',network_broadcast)
       replaced = replaced.replace('[! vpn_pool_start !]',vpn_pool_start)
       replaced = replaced.replace('[! vpn_pool_end !]',vpn_pool_end)
@@ -320,7 +345,7 @@ class Container(BaseModel):
       vpn_image,
       network,
       existing_location=data_path,
-      ports={"1194/tcp":port},              
+      ports={"1194/tcp": port},              
       cap_add="NET_ADMIN",
       privileged=True
       )
@@ -333,7 +358,7 @@ class Container(BaseModel):
     folder_name="vpn_keygen"
     crt_command= f"./create_client_files.sh {user.username}"
     data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
-    location = Container.create_container_dir(folder_name)
+    location = Container.create_container_dir(folder_name,"vpn_crt_cfg_gen_")
 
     vpn_data_path = os.path.join(location,"data")
     image, logs = docker_client.images.build(
@@ -372,17 +397,11 @@ class Container(BaseModel):
     with open(user_cfg_path,"r") as f:
       user_cfg = f.read()
       # Do some corrections, for some reason server outputs faulty cfg
-      user_cfg = user_cfg.replace("dev","dev tap").replace("remote ","") 
+      user_cfg = user_cfg.replace("dev","dev tun").replace("remote ","") 
 
     shutil.rmtree(location)
 
     
-
-    # cleanup created volumes TODO: Do it properly.
-    docker_client.containers.prune()
-    docker_client.volumes.prune()
-
-
     return user_crt, user_key, user_cfg
 
   @staticmethod
@@ -414,9 +433,11 @@ class ContainerImage(BaseModel):
       self.name,
       "properties.json"
     )
-
-    with open(properties_path) as json_file:
-          data = json.load(json_file)
+    try:
+      with open(properties_path) as json_file:
+        data = json.load(json_file)
+    except FileNotFoundError:
+        data = {"error":"container properties not found"}
     return data
 
   def does_exist(self):
@@ -568,6 +589,9 @@ class Network(BaseModel):
                         backref=db.backref('assigned_networks', lazy='dynamic')
                         )
   
+  def get_network_object(self):
+    return docker_client.networks.get(self.name)
+
   def get_completion_percent(self):
     total_flags = len(self.get_flags())
     if total_flags == 0:
@@ -734,7 +758,7 @@ class Network(BaseModel):
     for container in self.containers:
       container.stop()
     try:
-      docker_client.networks.get(self.name).remove()
+      self.get_network_object().remove()
     except:
       pass
     
@@ -787,55 +811,92 @@ class Network(BaseModel):
   @staticmethod
   def start_containers(network_name,container_image_names,app):
     with app.app_context():
+
+      # Create scoped session for the thread to prevent threading
+      # related errors.
       session = db.create_scoped_session()
       try:
-        
+        # Query the network from the scoped session
         network = session.query(Network).filter(Network.name == network_name).first()
 
+        # Start the VPN Container
         vpn_container = Container.create_vpn_container(network)
+
+        # Get the port of the vpn container
+        # to update the networks database object
         vpn_container_object = vpn_container.get_container_object()
         network.vpn_port = vpn_container_object.ports['1194/tcp'][0]['HostPort']
 
+        # Start all containers
         for container_folder in container_image_names:
           Container.create_detatched_container(container_folder,network)
-        
+        # Update their hosts file, so they can easily 
+        # reach eachother in scripts
         for container in network.containers:
           container.update_hosts_file()
         
+        # Set the network status to running
+        # At this point all containers should be running
         network.status = NETWORK_STATUS_RUNNING
         
         session.commit()
+        
 
       except Exception as err:
+
+        # stop all containers that were created
+        network_object = network.get_network_object()
+        network_object.reload()
+
+        # stop all containers that are left, because they had
+        # no database entry
+        for container in network_object.containers:
+          container.stop()
+        # update the networks status
         network.status = NETWORK_STATUS_ERROR
         session.commit()
         current_app.logger.error(err)
         raise err
-      
+      session.remove()
 
   @staticmethod
-  def create_network(network_name,container_image_names,assign_users = [], assign_groups = [],preset=None):
-    network_name = current_app.config["APP_PREFIX"] +"_"+ network_name
+  def create_network(
+    network_name,container_image_names,
+    assign_users = [], 
+    assign_groups = [],
+    preset=None
+    ):
+    # append app prefix (vitsl) to the network
+    network_name = current_app.config["APP_PREFIX"] +"_"+ network_name 
+
+    # check if the network name contains invalid characters
     if not utils.is_valid_docker_name(network_name):
       raise errors.InvalidNetworkNameException(network_name)
+ 
     network = None
+    network_db = None
     current_app.logger.info("Starting network: " + network_name)
-    try:
-  
-      network = docker_client.networks.create(
-          name=network_name,
-          check_duplicate=True,
 
+    # catch errors to clean up leftover containers
+    # if something went wrong
+    try:
+
+      # Create the docker network
+      network = docker_client.networks.create(
+          name=network_name, # Give it the networks name
+          check_duplicate=True, # Check if a network with the name already exists
         )
-      network.reload()
+
+      network.reload() # Let the docker daemon refetch network data
       gateway = network.attrs["IPAM"]["Config"][0]["Gateway"]
       subnet = network.attrs["IPAM"]["Config"][0]["Subnet"]
+
+      # get all the assigned users and groups, remove duplicates
       assign_users = utils.remove_duplicates_from_list(assign_users)
       assign_groups = utils.remove_duplicates_from_list(assign_groups)
 
-        
-
-
+      # create the networks database entry
+      # and set the status to "starting"
       network_db = Network(
         name=network_name,
         gateway=gateway,
@@ -847,12 +908,14 @@ class Network(BaseModel):
         vpn_port=Network.get_available_port()
       )
       
+      # Commit the network to the database
+      # so the worker threads can access it through 
+      # the database
       db.session.add(network_db)
       db.session.commit()
 
-
-
-      #network_db.start_containers(container_image_names)
+      # start the threaded container started
+      # for a faster API response
       worker_thread = threading.Thread(
         target=Network.start_containers,
         args=(
@@ -869,13 +932,16 @@ class Network(BaseModel):
       # If we fail somewhere during the creation process
       # delete and remove everything that might already
       # got created.
+      if network_db is not None:
+        # Reflect that something went wrong on the
+        # networks status
+        network.status = NETWORK_STATUS_ERROR
+        db.session.add(network)
+        db.session.commit()
+
       current_app.logger.error(str(err))
-      if network is not None:
-        network.reload()
-        for container in network.containers:
-          container.stop()
-          network.remove()
-    
+      # re-raise the error so it can be propagated
+      # to the frontend
       raise err
 
   @staticmethod
@@ -894,20 +960,26 @@ class Network(BaseModel):
 
   @staticmethod
   def get_available_port():
+    # Get all networks to get
+    # their used ports
     networks = Network.get_all_networks()
     used_ports = []
-    
+    # Append all used ports to
+    # the used_ports array
     for network in networks:
       used_ports.append(network.vpn_port)
-
+    
+    # Get the portrange from the config
     port_range = current_app.config["VPN_PORT_RANGE"]
     port_min = port_range[0]
     port_max = port_range[1]
-
+    
+    # Go through the port range and find a 
+    # port that isnt used yet
     for port in range(port_min,port_max):
       if port not in used_ports:
         return port
-
+    # No port was found if we end up here
     raise errors.NoPortsAvailableException()
 
 class Flag(BaseModel):
