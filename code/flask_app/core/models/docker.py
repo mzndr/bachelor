@@ -384,6 +384,8 @@ class Container(BaseModel):
 
     
 
+    
+
     user_crt_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.crt")
     user_crt = None
     user_key_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.key")
