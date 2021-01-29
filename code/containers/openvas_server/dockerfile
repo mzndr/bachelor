@@ -8,6 +8,7 @@ RUN useradd -ms /bin/bash alice && echo 'alice:12345' | chpasswd && \
 
 RUN apt-get update && apt-get install -yqq \
     sudo \ 
+    openvas \
     openssh-server 
     
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \

@@ -241,8 +241,8 @@ class Container(BaseModel):
     # Build the image
     image, logs = docker_client.images.build(
       path=data_path,
-      nocache=True, # Dont use caching, so the modified files get used
-      forcerm=True, # Remove the image after the container has stopped
+      nocache=False, # Dont use caching, so the modified files get used
+      forcerm=True,  # Remove the image after the container has stopped
       tag=container_name.lower() # Tag it with the container name, for debugging purposes
     )
 
@@ -320,21 +320,25 @@ class Container(BaseModel):
   @staticmethod 
   def gen_vpn_crt_and_cfg(user):
     
+    # use the vpn keygen image
     folder_name="vpn_keygen"
+    # command to call the creation script in the container.
     crt_command= f"./create_client_files.sh {user.username}"
-    data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
+    # create a location where the container can write the file
     location = Container.create_container_dir(folder_name,"vpn_crt_cfg_gen_")
 
     # generate random name
     container_name = f"{current_app.config['APP_PREFIX']}_{secure_filename(folder_name)}-{user.username}_{str(uuid.uuid4()).split('-')[0]}"
     vpn_data_path = os.path.join(location,"data")
+
+    # build the image
     image, logs = docker_client.images.build(
       path=location,
       nocache=True,
       tag=container_name
     )
 
-
+    # let the container run attatched
     output = docker_client.containers.run(
       image=image,
       remove=True,
@@ -344,13 +348,10 @@ class Container(BaseModel):
       command=crt_command,
       stdout=True,
       stderr=True,
-      volumes={vpn_data_path:{"bind":"/etc/openvpn","mode":"rw"}}           
+      volumes={vpn_data_path:{"bind":"/etc/openvpn","mode":"rw"}} # mount the       
     )
 
-    
-
-    
-
+    # Set the paths for the files
     user_crt_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.crt")
     user_crt = None
     user_key_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.key")
@@ -358,6 +359,7 @@ class Container(BaseModel):
     user_cfg_path = os.path.join(vpn_data_path,"userdata/",f"{user.username}.ovpn")
     user_cfg = None
 
+    # Read the files to variables
     with open(user_crt_path,"r") as f:
       user_crt = f.read()
     with open(user_key_path,"r") as f:
@@ -367,10 +369,11 @@ class Container(BaseModel):
       # Do some corrections, for some reason server outputs faulty cfg
       user_cfg = user_cfg.replace("dev","dev tun").replace("remote ","") 
 
+    # Cleanup everything that was created
     shutil.rmtree(location)
-
     docker_client.images.remove(container_name, force=True)
     
+    # Return the read data
     return user_crt, user_key, user_cfg
 
   @staticmethod
