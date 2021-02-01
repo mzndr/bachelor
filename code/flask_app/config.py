@@ -32,6 +32,7 @@ class Config(object):
   SECURITY_RECOVERABLE = False
   SECURITY_LOGIN_USER_TEMPLATE = 'login_user.jinja'
   SECURITY_REGISTER_USER_TEMPLATE = 'register_user.jinja'
+  SECURITY_CHANGE_PASSWORD_TEMPLATE = 'change_password.jinja'
 
 
   #SECURITY_URL_PREFIX = '/auth'

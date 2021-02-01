@@ -536,6 +536,7 @@ class NetworkPreset(BaseModel):
 NETWORK_STATUS_RUNNING = "running"
 NETWORK_STATUS_STARTING = "starting"
 NETWORK_STATUS_RESTARTING = "restarting"
+NETWORK_STATUS_DELETING = "deleting"
 NETWORK_STATUS_ERROR = "error"
 class Network(BaseModel):
   """Model for a running network"""
@@ -728,6 +729,9 @@ class Network(BaseModel):
     return ret
 
   def delete(self):
+    self.status = NETWORK_STATUS_DELETING
+    db.session.commit()
+    
     for container in self.containers:
       container.stop()
     try:

@@ -243,7 +243,13 @@ class NetworkRendering{
         break;
       case "starting":
         color = "bg-warning"
+        status = "<div class='spinner-border spinner-border-sm mr-2 mb-1'></div>" + status
         tooltip = "Network is starting..."
+        break;
+      case "deleting":
+        color = "bg-danger"
+        status = "<div class='spinner-border spinner-border-sm mr-2 mb-1'></div>" + status
+        tooltip = "Network is getting deleted..."
         break;
       case "error":
         color = "bg-danger"

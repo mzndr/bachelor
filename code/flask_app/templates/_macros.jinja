@@ -75,16 +75,22 @@
   </span>
   {% elif state == "restarting" %}
   <span class="badge badge-pill bg-warning" data-toggle="tooltip" data-placement="right" title="Container is restarting.">
+    <div class='spinner-border spinner-border-sm mr-2 mb-1'></div>
     Restarting
   </span>
-
-    {% elif state == "starting" %}
+  {% elif state == "starting" %}
   <span class="badge badge-pill bg-warning" data-toggle="tooltip" data-placement="right" title="Container is restarting.">
+    <div class='spinner-border spinner-border-sm mr-2 mb-1'></div>
     Starting
   </span>
   {% elif state == "error" %}
   <span class="badge badge-pill bg-danger" data-toggle="tooltip" data-placement="right" title="Container exited.">
     Error
+  </span>
+  {% elif state == "deleting" %}
+  <span class="badge badge-pill bg-danger" data-toggle="tooltip" data-placement="right" title="Container exited.">
+    <div class='spinner-border spinner-border-sm mr-2 mb-1'></div>
+    Deleting
   </span>
   {% endif %}
 {% endmacro %}
