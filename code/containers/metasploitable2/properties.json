@@ -1,0 +1,5 @@
+{
+  "description":"Metasploitable image with various vulnerabilities.",
+  "show_info":false,
+  "hostname":"metasploitable"
+}

@@ -1,0 +1,3 @@
+FROM tleemcjr/metasploitable2
+CMD /bin/services.sh && tail -f /dev/null
+

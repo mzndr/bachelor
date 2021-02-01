@@ -1,6 +1,4 @@
 {
-  "description":"Ubuntu workstation with ssh enabled (ssh user@[! container_ip !]). Available users: root, alice, bob, carl. Password 12345",
-  "show_info":true,
-  "ignorefiles":[
-  ]
+  "description":"OpenVAS server (port 80/443). Login: admin Password: admin",
+  "show_info":true
 }

@@ -8,12 +8,7 @@ RUN useradd -ms /bin/bash alice && echo 'alice:12345' | chpasswd && \
 
 RUN apt-get update && apt-get install -yqq \
     sudo \ 
-    openssh-server \
-    apache2 \
-    gpg \
-    ettercap-text-only \
-    nmap \
-    tcpdump
+    openssh-server
     
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
     service ssh start

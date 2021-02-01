@@ -239,6 +239,7 @@ class Container(BaseModel):
     container_db.place_flags()
 
     # Build the image
+    current_app.logger.info(f"Building image for {container_name} ({folder_name})")
     image, logs = docker_client.images.build(
       path=data_path,
       nocache=False, # Dont use caching, so the modified files get used

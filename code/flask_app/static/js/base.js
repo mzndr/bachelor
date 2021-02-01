@@ -22,7 +22,6 @@ class Messaging{
   
   static getMessageDiv(message,type){
     let bg = ""
-  
     switch (type) {
       case "error":
         bg = "alert-danger"
@@ -93,22 +92,26 @@ function placeCopyButtons(){
 }
 
 function copyToClipborad(text,element){
+  // Create a random id for the textarea
   let id = "tmp_textbox_" + Math.random();
+  // Create a temporal textarea, with the text to copy inside it
   let $tmpTextarea = $(`<textarea id="${id}" style="">${text}</textarea>`)
-  if(element)
-  {
-    $(element).append($tmpTextarea)
-  }
-  else
-  {
-    $(document.body).append($tmpTextarea)
-  }
-  let copyText = document.getElementById(id);
-  copyText.select();
-  document.execCommand("copy");
-  $tmpTextarea.remove()
-  Messaging.createTemporalMessage("Text Copied!","success")
+  // If a element was given append the textarea to 
+  // the element, if not append it to the body.
+  // For focus problems on modals
+  if(element){ $(element).append($tmpTextarea) }
+  else{ $(document.body).append($tmpTextarea) }
 
+  // Get the temporal textarea
+  let copyText = document.getElementById(id);
+  // Select the text inside the textarea
+  copyText.select();
+  // Execute the copy command
+  document.execCommand("copy");
+  // Remove the temporal textarea
+  $tmpTextarea.remove()
+  // Tell the user that the text was copied.
+  Messaging.createTemporalMessage("Text copied to clipboard!","success")
 }
 
 
