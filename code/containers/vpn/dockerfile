@@ -21,6 +21,4 @@ CMD \
 ufw enable && \ 
 ufw allow 1194/tcp && \
 /etc/init.d/openvpn start && \
-#ufw disable && \
-#ufw enable && \
 tail -f /dev/null
