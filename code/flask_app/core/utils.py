@@ -8,4 +8,8 @@ def is_valid_docker_name(name):
   return False
 
 def remove_duplicates_from_list(_list):
-  return list(dict.fromkeys(_list))
+  new_list = []
+  for item in _list:
+    if item not in new_list:
+      new_list.append(item)
+  return new_list

@@ -17,5 +17,10 @@ COPY ./firewall/ufw /etc/default/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV OPENVPN=/etc/openvpn
 
-EXPOSE 1194/udp
-CMD ufw enable & ufw allow 1194/tcp && ufw reload && /etc/init.d/openvpn start && tail -f /dev/null
+CMD \
+ufw enable && \ 
+ufw allow 1194/tcp && \
+/etc/init.d/openvpn start && \
+ufw disable && \
+ufw enable && \
+tail -f /dev/null

@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import random
 import re
 import shutil
 import tempfile
@@ -211,7 +212,8 @@ class Container(BaseModel):
     command=None, 
     cap_add=None, 
     ports=None,
-    volumes=None
+    volumes=None,
+    caching=True
     ):
 
     # generate unique name with network and image name as prefix
@@ -242,8 +244,8 @@ class Container(BaseModel):
     current_app.logger.info(f"Building image for {container_name} ({folder_name})")
     image, logs = docker_client.images.build(
       path=data_path,
-      nocache=False, # Dont use caching, so the modified files get used
-      forcerm=True,  # Remove the image after the container has stopped
+      nocache=not caching,  # Dont use caching, so the modified files get used
+      forcerm=True,     # Remove the image after the container has stopped
       tag=container_name.lower() # Tag it with the container name, for debugging purposes
     )
 
@@ -293,10 +295,13 @@ class Container(BaseModel):
     
     users.extend(Role.get_admin_users()) # Also grant admins access
 
-    users = utils.remove_duplicates_from_list(users)
+    usrs = utils.remove_duplicates_from_list(users)
     
+    for user in usrs:
+      print(user.username)
+
     # Copy user authentication files into vpn
-    for user in users:
+    for user in usrs:
       crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
       key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
 
@@ -313,7 +318,8 @@ class Container(BaseModel):
       network,
       existing_location=data_path,
       ports={"1194/tcp": port},    # Map the port of container          
-      privileged=True
+      privileged=True,
+      caching=False
       )
 
     return vpn_container
@@ -799,10 +805,6 @@ class Network(BaseModel):
         # Start the VPN Container
         vpn_container = Container.create_vpn_container(network)
 
-        # Get the port of the vpn container
-        # to update the networks database object
-        vpn_container_object = vpn_container.get_container_object()
-        network.vpn_port = vpn_container_object.ports['1194/tcp'][0]['HostPort']
 
         # Start all containers
         for container_folder in container_image_names:
@@ -945,19 +947,24 @@ class Network(BaseModel):
     # the used_ports array
     for network in networks:
       used_ports.append(network.vpn_port)
-    
+
     # Get the portrange from the config
     port_range = current_app.config["VPN_PORT_RANGE"]
     port_min = port_range[0]
     port_max = port_range[1]
-    
+    rnge = range(port_min,port_max)
+    if len(used_ports) == len(rnge):
+      # No port was found if we end up here
+      raise errors.NoPortsAvailableException()
+
     # Go through the port range and find a 
     # port that isnt used yet
-    for port in range(port_min,port_max):
-      if port not in used_ports:
-        return port
-    # No port was found if we end up here
-    raise errors.NoPortsAvailableException()
+    rnd_port = random.choice(rnge)
+    while rnd_port in used_ports:
+      rnd_port = random.choice(rnge)
+    return rnd_port
+
+
 
 class Flag(BaseModel):
 
