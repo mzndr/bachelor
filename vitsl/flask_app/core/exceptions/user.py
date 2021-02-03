@@ -15,6 +15,15 @@ class UsernameAlreadyTakenException(RegistrationException):
     self.message = message
     super().__init__(self.message)
 
+class InvalidUsernameException(RegistrationException):
+  def __init__(self,name,message=None):
+    if message==None:
+      message= f"Username '{name}' is invalid. It must match [a-zA-Z0-9_.-]*"
+
+    self.message = message
+    super().__init__(self.message)
+
+
 class EmailAlreadyTakenException(RegistrationException):
   def __init__(self,email,message=None):
     if message==None:

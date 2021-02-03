@@ -123,6 +123,8 @@ class User(BaseModel, UserMixin):
 
     if User.username_exists(username):
       raise user_errors.UsernameAlreadyTakenException(name=username)
+    if not utils.is_valid_docker_name(username):
+      raise user_errors.InvalidUsernameException(name=username)
     if User.email_exists(email):
       raise user_errors.EmailAlreadyTakenException(email=email)
 
@@ -134,9 +136,19 @@ class User(BaseModel, UserMixin):
       roles=roles
       )
     
-    db.session.add(user)
+    db.session.add(user)g
     db.session.commit()
     user.gen_vpn_files()
+
+    if(current_app.config["CREATE_TUTORIAL_NETWORK_ON_REGISTRATION"]):
+      try:
+        NetworkPreset.get_network_preset_by_name("Tutorial").create_network(
+          assign_users=[user],
+          name= f"{user.username}_tutorial_network"
+          )
+      except Exception as err:
+        current_app.logger.error(str(err))
+        flash(f"Tutorial Network could not be created: {str(err)}","error")
 
     return user
 
