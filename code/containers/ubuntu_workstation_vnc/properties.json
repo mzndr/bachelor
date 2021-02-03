@@ -1,0 +1,6 @@
+{
+  "description":"VNC Workstation. Connect to it with your browser (http://[! container_ip !])",
+  "show_info":true,
+  "hostname":"vnc_workstation",
+  "flags":{}
+}
