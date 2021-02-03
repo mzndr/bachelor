@@ -141,7 +141,7 @@ class Container(BaseModel):
       container_object.reload() # Also tell docker-daemon to fetch current information about the container. 
       return container_object
     except docker.errors.NotFound:
-      current_app.logger.warning("Requested docker container of " + str(self) + "was not found.")
+      current_app.logger.warning("Requested docker container of " + str(self.name) + "was not found.")
       return None
 
   def place_flags(self):
@@ -207,10 +207,10 @@ class Container(BaseModel):
   def create_detatched_container(
     folder_name,            
     network,                
-    privileged=True,       
+    privileged=False,       
     existing_location=None, 
     command=None, 
-    cap_add="NET_ADMIN", 
+    cap_add=None, 
     ports=None,
     volumes=None,
     caching=True
@@ -255,7 +255,7 @@ class Container(BaseModel):
     # Actually start the docker container
     container = docker_client.containers.run(
       image=image,            # Use the previously built image
-      remove=True,            # Remove the container after it was stopped
+      remove=False,            # Remove the container after it was stopped
       detach=True,            # Detatch the container after it was started
       name=container_name,   
       network=network.name,   # Assign the container to the network
@@ -297,8 +297,6 @@ class Container(BaseModel):
 
     usrs = utils.remove_duplicates_from_list(users)
     
-    for user in usrs:
-      print(user.username)
 
     # Copy user authentication files into vpn
     for user in usrs:
@@ -319,6 +317,7 @@ class Container(BaseModel):
       existing_location=data_path,
       ports={"1194/tcp": port},    # Map the port of container          
       privileged=True,
+      cap_add="NET_ADMIN",
       caching=False
       )
 
@@ -639,14 +638,17 @@ class Network(BaseModel):
       "command": self.get_connection_command(current_user)
     }
 
-    for flag in self.flags:
-      json["flags"].append(flag.get_json())
+    if self.status == NETWORK_STATUS_RUNNING:
+      for flag in self.flags:
+        json["flags"].append(flag.get_json())
+      for container in self.containers:
+        json["containers"].append(container.get_json())
+
 
     for user in self.assigned_users:
       json["assigned_users"].append(user.get_json())
 
-    for container in self.containers:
-      json["containers"].append(container.get_json())
+
 
     return json
 
@@ -811,8 +813,8 @@ class Network(BaseModel):
           Container.create_detatched_container(container_folder,network)
         # Update their hosts file, so they can easily 
         # reach eachother in scripts
-        for container in network.containers:
-          container.update_hosts_file()
+        #for container in network.containers:
+        #  container.update_hosts_file()
         
         # Set the network status to running
         # At this point all containers should be running
@@ -1014,6 +1016,7 @@ class Flag(BaseModel):
   def get_description(self):
     if self.container == None:
       return None
+
     return self.container.read_properties()["flags"][self.name]["description"]
 
 

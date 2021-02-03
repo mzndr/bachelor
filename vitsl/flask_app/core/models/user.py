@@ -138,17 +138,6 @@ class User(BaseModel, UserMixin):
     db.session.commit()
     user.gen_vpn_files()
 
-    
-    if(current_app.config["CREATE_TUTORIAL_NETWORK_ON_REGISTRATION"]):
-      try:
-        NetworkPreset.get_network_preset_by_name("Tutorial").create_network(
-          assign_users=[user],
-          name= f"{user.username}_tutorial_network"
-          )
-      except Exception as err:
-        current_app.logger.error(str(err))
-        flash(f"Tutorial Network could not be created: {str(err)}","error")
-
     return user
 
   @staticmethod

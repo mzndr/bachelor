@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import atexit
 import os
 
@@ -84,3 +82,7 @@ def register_blueprints(app):
     
     for blueprint in blueprints:
         app.register_blueprint(blueprint)
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run()
