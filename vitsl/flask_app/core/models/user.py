@@ -136,7 +136,7 @@ class User(BaseModel, UserMixin):
       roles=roles
       )
     
-    db.session.add(user)g
+    db.session.add(user)
     db.session.commit()
     user.gen_vpn_files()
 
