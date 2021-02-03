@@ -207,10 +207,10 @@ class Container(BaseModel):
   def create_detatched_container(
     folder_name,            
     network,                
-    privileged=False,       
+    privileged=True,       
     existing_location=None, 
     command=None, 
-    cap_add=None, 
+    cap_add="NET_ADMIN", 
     ports=None,
     volumes=None,
     caching=True
@@ -374,7 +374,7 @@ class Container(BaseModel):
     with open(user_cfg_path,"r") as f:
       user_cfg = f.read()
       # Do some corrections, for some reason server outputs faulty cfg
-      user_cfg = user_cfg.replace("dev","dev tun").replace("remote ","") 
+      user_cfg = user_cfg.replace("dev ","dev tun").replace("remote ","") 
 
     # Cleanup everything that was created
     shutil.rmtree(location)

@@ -2,7 +2,6 @@ class ManageGroups{
   static submitData(){
 
     let name = $("#group_name").val()
-  
     Api.createGroup(name,(response)=>{
       location.reload()
     })
@@ -18,6 +17,12 @@ class ManageGroups{
 }
 
 class ManageUsers{
+  static kickUser(userID){
+    Api.kickUser(userID,(response)=>{
+      location.reload()
+    })
+  }
+
   static deleteUser(userId)
   {
     Api.deleteUser(userId,(response)=>{

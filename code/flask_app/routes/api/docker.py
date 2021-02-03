@@ -19,18 +19,6 @@ def get_available_container_images():
   files = ContainerImage.get_available_container_images()
   return jsonify(files)
 
-@docker_api_bp.route('/createtest/<string:name>', methods=['GET'])
-@login_required
-@roles_required("admin")
-def create_test_network(name):
-  test_user = User.get_user_by_username(current_app.config["USERNAME"])
-  Network.create_network(
-    network_name=name,
-    container_image_names=["apache","apache","apache"],
-    assign_users=[test_user]
-  )
-  
-  return get_all_networks()
 
 @docker_api_bp.route('/networkpresets/create', methods=['POST'])
 @login_required

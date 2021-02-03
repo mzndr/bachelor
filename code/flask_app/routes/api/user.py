@@ -65,6 +65,23 @@ def regen_auth_files():
   current_user.gen_vpn_files()
   return {"status":"success"},200
 
+@user_api_bp.route('/current/leave_group', methods=['GET'])
+@login_required
+def leave_group():
+  if current_user.group == None:
+    flash("You aren't assigned to any group.","error")
+  else:
+    current_user.leave_group()
+    flash("You left the group.","success")
+  return redirect(request.referrer)
+
+@user_api_bp.route('/<int:user_id>/leave_group', methods=['GET'])
+@login_required
+def kick_user(user_id):
+  user = User.get_user_by_id(user_id)
+  user.leave_group()
+  return {"status":"success"},200
+
 @user_api_bp.route('/<int:user_id>/grant/<string:role_name>', methods=['PUT'])
 @login_required
 @roles_required('admin')
@@ -114,9 +131,7 @@ def get_all_users():
   return jsonify(ret)
 
 
-
 ### Groups ### 
-
 @user_api_bp.route('/groups/', methods=['GET'])
 @login_required
 @roles_required('admin')
@@ -131,13 +146,18 @@ def get_all_groups():
 @login_required
 @roles_required('admin')
 def create_group():
-  json_data = request.get_json()
-  name = json_data["name"]
-  group = Group.create_group(
-    name=name,
-    assign_users=[]
-  )
-  return group.get_json()
+  try:
+    json_data = request.get_json()
+    name = json_data["name"]
+    group = Group.create_group(
+      name=name,
+      assign_users=[]
+    )
+  except Exception as err:
+    flash(str(err),"error")
+    return str(err),500
+  flash("Group created!","success")
+  return group.get_json(), 200
 
 @user_api_bp.route('/groups/delete/<int:id>', methods=['DELETE'])
 @login_required

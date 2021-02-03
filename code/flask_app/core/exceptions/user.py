@@ -46,3 +46,19 @@ class RoleNotFoundException(Error):
 
       self.message = message
       super().__init__(self.message) 
+
+class InvalidGroupNameException(Error):
+  def __init__(self,name,message=None):
+    if message==None:
+      message= f"Invalid group name \"{ name }\". It must match [a-zA-Z0-9_.-]*"
+
+    self.message = message
+    super().__init__(self.message)
+
+class GroupAlreadyExistsException(Error):
+  def __init__(self,name,message=None):
+    if message==None:
+      message= f"Group \"{ name }\" already exists."
+
+    self.message = message
+    super().__init__(self.message)

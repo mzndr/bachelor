@@ -3,6 +3,7 @@ import string
 import uuid
 
 import flask_app.core.exceptions.user as user_errors
+import flask_app.core.utils as utils
 from flask import current_app, flash, url_for
 from flask_app.core.db import db
 from flask_app.core.models.core import BaseModel
@@ -112,6 +113,10 @@ class User(BaseModel, UserMixin):
     db.session.commit()
     return password
 
+  def leave_group(self):
+    self.group = None
+    db.session.add(self)
+    db.session.commit()
 
   @staticmethod
   def create_user(username,password,email,roles=[]):
@@ -269,8 +274,18 @@ class Group(BaseModel):
     return url_for('users.group_invite',code=self.invite_code, _external=True)
 
   @staticmethod
+  def name_available(name):
+    group = Group.get_group_by_name(name)
+    return group == None
+    
+  @staticmethod
   def create_group(name,assign_users):
     group = Group()
+    if not utils.is_valid_docker_name(name):
+      raise user_errors.InvalidGroupNameException(name)
+    if not Group.name_available(name):
+      raise user_errors.GroupAlreadyExistsException(name)
+
     group.name = name
     group.assign_users(assign_users)
     group.invite_code = str(uuid.uuid4()).replace("-","")
@@ -282,6 +297,10 @@ class Group(BaseModel):
   @staticmethod
   def get_all_groups():
     return Group.query.all()
+
+  @staticmethod
+  def get_group_by_name(name):
+    return Group.query.filter_by(name=name).first()
 
   @staticmethod
   def get_group_by_id(id):

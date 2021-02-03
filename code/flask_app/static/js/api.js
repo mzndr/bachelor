@@ -152,6 +152,11 @@ class Api{
     Api.postDataAsJson(api_route,data,callback)
   }
   
+  static kickUser(userId,callback){
+    let api_route = Flask.url_for("user_api.kick_user",{"user_id":userId})
+    $.get(api_route,(data)=>{callback(data)})
+  }
+
   static getAllUsers(callback){
     let api_route = Flask.url_for("user_api.get_all_users")
     $.get(api_route,(data)=>{

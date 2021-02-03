@@ -2,6 +2,9 @@ import re
 
 
 def is_valid_docker_name(name):
+  if name == "":
+    return False
+
   regex = r'[a-zA-Z0-9_.-]*'
   if re.fullmatch(regex,name) is not None:
     return True

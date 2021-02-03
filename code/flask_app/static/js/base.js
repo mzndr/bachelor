@@ -57,16 +57,19 @@ class Messaging{
   }
 
   static apiResponseToMessage(response){
-    let status = response.status
-    let messageType = ""
+    let status = response.status  
     let message = response.responseText
-    switch (status) {
-      case 200:
-        messageType = "success"
-      default:
-        messageType = "error"
-        break;
+    let messageType = ""
+    if (status == undefined){
+      messageType = "success"
+      message = response
     }
+    else
+    {
+      messageType = "error"
+    }
+
+
     Messaging.createMessage(message,messageType)
   }
 

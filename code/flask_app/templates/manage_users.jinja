@@ -61,6 +61,21 @@
                       </div>
                     {% endcall %}
 
+                    {% if user.group is not none %}
+                      {% call macros.create_modal_button("_user_kick_group_" + user.id.__str__(), class="btn btn-danger mr-2") %}
+                        <i class="fas fa-sign-out-alt"></i> Kick from group
+                      {% endcall %}
+                      {% call macros.create_modal("_user_kick_group_" + user.id.__str__(), title="Confirmation required!") %}
+                        <div class="modal-body">
+                          <p>Do you really want to kick {{user.username}} from {{user.group.name}}?</p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-danger float-left" data-dismiss="modal" onclick="ManageUsers.kickUser({{user.id}})">Yes</button>
+                          <button type="button" class="btn btn-success" data-dismiss="modal">Dismiss</button>
+                        </div>
+                      {% endcall %}
+                    {% endif %}
+
 
                     {% if user.has_role("admin") %}
                       <button class="btn btn-warning" onclick="ManageUsers.revokeRole({{user.id}},'admin')"><i class="fas fa-user-shield mr-2"></i>Revoke Admin</button>

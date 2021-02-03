@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM dorowu/ubuntu-desktop-lxde-vnc:latest
 
 RUN useradd -ms /bin/bash alice && echo 'alice:12345' | chpasswd && \
     useradd -ms /bin/bash bob   && echo 'bob:12345'   | chpasswd && \
@@ -9,16 +9,7 @@ ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && apt-get install -yqq \
-    sudo \ 
-    net-tools \
-    openssh-server \
-    apache2 \
     gpg \
-    ettercap-text-only \
+    ettercap-graphical \
     nmap \
-    tcpdump
-    
-RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
-    service ssh start
-
-CMD ["/usr/sbin/sshd","-D"]
+    wireshark
