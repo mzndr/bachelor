@@ -137,9 +137,9 @@ class User(BaseModel, UserMixin):
       )
     
     db.session.add(user)
-    db.session.commit()
+    db.session.flush()
     user.gen_vpn_files()
-
+    db.session.commit()
     if(current_app.config["CREATE_TUTORIAL_NETWORK_ON_REGISTRATION"]):
       try:
         NetworkPreset.get_network_preset_by_name("Tutorial").create_network(

@@ -1,5 +1,4 @@
 #!/bin/sh
-
 easyrsa build-client-full "$1" nopass
 mkdir /etc/openvpn/userdata
 cp /etc/openvpn/pki/issued/$1.crt /etc/openvpn/userdata/$1.crt 

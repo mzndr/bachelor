@@ -198,9 +198,12 @@ class Container(BaseModel):
   ### STATIC METHODS ###
   @staticmethod 
   def create_container_dir(folder_name,container_name):
+    import os
     data_path = os.path.join(current_app.config["CONTAINER_DIR"],folder_name)
+    
     root_location = tempfile.mkdtemp(prefix=container_name)
     copy_tree(data_path, root_location)
+    
     return root_location
 
   @staticmethod
@@ -279,6 +282,8 @@ class Container(BaseModel):
   
   @staticmethod
   def create_vpn_container(network):
+    import os
+
     from flask_app.core.models.user import Role
     """Creates the vpn container for the specified network"""
     vpn_image = "vpn"
@@ -331,7 +336,10 @@ class Container(BaseModel):
     # command to call the creation script in the container.
     crt_command= f"./create_client_files.sh {user.username}"
     # create a location where the container can write the file
-    location = Container.create_container_dir(folder_name,"vpn_crt_cfg_gen_")
+    location = Container.create_container_dir(
+      folder_name,
+      f"{current_app.config['APP_PREFIX']}_auth_gen_"
+    )
 
     # generate random name
     container_name = f"{current_app.config['APP_PREFIX']}_{secure_filename(folder_name)}-{user.username}_{str(uuid.uuid4()).split('-')[0]}"
@@ -376,7 +384,7 @@ class Container(BaseModel):
       user_cfg = user_cfg.replace("dev ","dev tun").replace("remote ","") 
 
     # Cleanup everything that was created
-    shutil.rmtree(location)
+    # shutil.rmtree(location)
     docker_client.images.remove(container_name, force=True)
     
     # Return the read data
