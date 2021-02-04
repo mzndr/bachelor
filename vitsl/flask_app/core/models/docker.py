@@ -953,6 +953,7 @@ class Network(BaseModel):
     # their used ports
     networks = Network.get_all_networks()
     used_ports = []
+    available_ports = []
     # Append all used ports to
     # the used_ports array
     for network in networks:
@@ -963,15 +964,19 @@ class Network(BaseModel):
     port_min = port_range[0]
     port_max = port_range[1]
     rnge = range(port_min,port_max)
+    
+    # Check if there are ports left
     if len(used_ports) == len(rnge):
-      # No port was found if we end up here
       raise errors.NoPortsAvailableException()
 
-    # Go through the port range and find a 
-    # port that isnt used yet
-    rnd_port = random.choice(rnge)
-    while rnd_port in used_ports:
-      rnd_port = random.choice(rnge)
+    # Get all the available ports
+    for port in rnge:
+      if port not in used_ports:
+        available_ports.append(port)
+
+    # Chose a random port from the available ports
+    rnd_port = random.choice(available_ports)
+    
     return rnd_port
 
 

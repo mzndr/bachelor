@@ -72,6 +72,9 @@ to their assigned virtual networks.
 
 
 ## Configuration
+
+You can find the configuration file at vitsl/flask_app/config.py
+
 1. Change the *PUBLIC_IP* line to the public IP of your server
 
         PUBLIC_IP = "your IP here"
@@ -93,6 +96,18 @@ to their assigned virtual networks.
         >> 9e83cab0f3ed72718d0d015545f54e8c
 
         SECRET_KEY = "9e83cab0f3ed72718d0d015545f54e8c"
+
+## Starting in foreground
+
+In the ./vitsl directory do:
+
+1. Activate the venv
+
+        source ./env/bin/activate
+
+2. Start the app
+
+        ./run_prod.sh
 
 ## Deploying with Apache2
 
