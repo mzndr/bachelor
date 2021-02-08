@@ -175,7 +175,7 @@ The name of the folder will be the name of the image.
 ```
 ```TAKE NOTE: If you copy paste this, or any JSON from this tutorial, remove the comments. These are not available in pure json format.```
 
-Inside that file, you can use ```[! container_ip !]``` to insert the ip of the container. This might be usefull to give users instructions on what to do. For example you could tell them in the description to ssh to the container with ```ssh bob@[! container_ip !]```
+Inside that file, you can use ```[! container_ip !]``` to insert the ip of the container. This might be usefull to give users instructions on what to do. For example you could tell them in the description to ssh to the container with ```ssh bob@[! container_ip !]```. The [! container_ip !] will be replaced with the containers ip on runtime.
 
 4. Inside the folder of your image, you can place other files that might be needed for building the image (configuration files etc.). If you don't want to rely on the COPY command, the folder itself gets mounted at runtime inside the container at /container_data
 
