@@ -173,6 +173,7 @@ The name of the folder will be the name of the image.
                 "flags":{}                              // Flags
         }
 ```
+```TAKE NOTE: If you copy paste this, or any JSON from this tutorial, remove the comments. These are not available in pure json format.```
 
 Inside that file, you can use ```[! container_ip !]``` to insert the ip of the container. This might be usefull to give users instructions on what to do. For example you could tell them in the description to ssh to the container with ```ssh bob@[! container_ip !]```
 
