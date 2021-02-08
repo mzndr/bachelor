@@ -1,4 +1,4 @@
-FROM dorowu/ubuntu-desktop-lxde-vnc:latest
+FROM dorowu/ubuntu-desktop-lxde-vnc:bionic
 
 RUN useradd -ms /bin/bash alice && echo 'alice:12345' | chpasswd && \
     useradd -ms /bin/bash bob   && echo 'bob:12345'   | chpasswd && \
@@ -8,8 +8,12 @@ RUN useradd -ms /bin/bash alice && echo 'alice:12345' | chpasswd && \
 ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+
+
 RUN apt-get update && apt-get install -yqq \
+    iptables \
     gpg \
-    ettercap-graphical \
     nmap \
-    wireshark
+    wireshark \
+    build-essential \
+    ettercap-graphical

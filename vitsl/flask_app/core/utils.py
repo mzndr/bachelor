@@ -16,3 +16,7 @@ def remove_duplicates_from_list(_list):
     if item not in new_list:
       new_list.append(item)
   return new_list
+
+
+  mac = netifaces.ifaddresses(interface_name)[netifaces.AF_LINK][0]['addr']
+  return mac

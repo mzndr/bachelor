@@ -148,29 +148,35 @@ class Container(BaseModel):
     flag_regex = r'(\[\#\ )+([a-z,A-Z,0-9,_])+(\ \#\])'
     rootdir = self.files_location
 
+    ignore_paths = []
+
     # iterate over all dirs
     for subdir, dirs, files in os.walk(rootdir):
       # iterate over every file in the current dir
       for file in files:
         # get the full path to the current file
         filepath = os.path.join(subdir, file)
+        
 
         # open it in read mode, to search for flag tags
-        with open(filepath,"r") as fr:
-          # get the file contents 
-          # and replace the flag tags 
-          # by regex
-          f_content = fr.read()
-          new_content = re.sub(
-            pattern=flag_regex,
-            repl= lambda match: self.network.get_flag(match,self),
-            string=f_content
-            )
+        try:
+          with open(filepath,"r") as fr:
+            # get the file contents 
+            # and replace the flag tags 
+            # by regex
+            f_content = fr.read()
+            new_content = re.sub(
+              pattern=flag_regex,
+              repl= lambda match: self.network.get_flag(match,self),
+              string=f_content
+              )
 
-          # Only overwrite the file if it has changed
-          if new_content != f_content:
-            with open(filepath,"w") as fw:
-              fw.write(new_content)
+            # Only overwrite the file if it has changed
+            if new_content != f_content:
+              with open(filepath,"w") as fw:
+                fw.write(new_content)
+        except:
+          current_app.logger.warning("Couldnt open file " + filepath)
 
   def place_context(self):
     flag_regex = r'(\[\!\ )+([a-z,A-Z,0-9,_])+(\ \!\])'
@@ -210,10 +216,10 @@ class Container(BaseModel):
   def create_detatched_container(
     folder_name,            
     network,                
-    privileged=False,       
+    privileged=True,        # Need privileges for network sniffing       
     existing_location=None, 
     command=None, 
-    cap_add=None, 
+    cap_add=[], 
     ports=None,
     volumes=None,
     caching=True
@@ -310,20 +316,24 @@ class Container(BaseModel):
 
       with open(crt_location,"w") as crt_file:
         crt_file.write(user.vpn_crt)
-      with open(key_location,"w") as key_file:
+      with open(key_location,"w") as key_file:  
         key_file.write(user.vpn_key)
 
 
+    gateway_ip = network.gateway
+    gateway_mac = network.get_gateway_mac()
+    current_app.logger.info(f"arp -s {gateway_ip} {gateway_mac}")
     # Actually start the container
     port = network.vpn_port
     vpn_container = Container.create_detatched_container(
       vpn_image,
       network,
+      command=f"./entrypoint.sh {gateway_ip} {gateway_mac}",
       existing_location=data_path,
       ports={"1194/tcp": port},    # Map the port of container          
       privileged=True,
       cap_add="NET_ADMIN",
-      caching=False
+      caching=True
       )
 
     return vpn_container
@@ -699,6 +709,22 @@ class Network(BaseModel):
       )
     worker_thread.start()
     return self
+
+  def get_gateway_mac(self):
+    import netifaces
+    
+    interfaces = netifaces.interfaces()
+    network_id = str(self.get_network_object().id)[:12]
+    interface_name = None
+    for i in interfaces:
+      if network_id in i:
+        interface_name = i
+    if interface_name == None:
+      raise ValueError(f"Interface f{network_id} not found!")
+      
+      
+    mac = netifaces.ifaddresses(interface_name)[netifaces.AF_LINK][0]['addr']
+    return mac
 
   def network_is_ready(self):
     return self.status == NETWORK_STATUS_RUNNING

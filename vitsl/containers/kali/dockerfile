@@ -1,0 +1,16 @@
+FROM kalilinux/kali-rolling
+
+RUN useradd -ms /bin/bash alice && echo 'alice:12345' | chpasswd && \
+    useradd -ms /bin/bash bob   && echo 'bob:12345'   | chpasswd && \
+    useradd -ms /bin/bash carl  && echo 'carl:12345'  | chpasswd && \
+    echo 'root:12345' | chpasswd
+
+
+RUN apt-get update && apt-get install -yqq \
+    sudo \ 
+    openssh-server
+    
+RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
+    service ssh start
+
+CMD ["/usr/sbin/sshd","-D"]

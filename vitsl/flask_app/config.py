@@ -5,7 +5,7 @@ basedir = os.path.abspath(os.path.join(os.path.dirname(__file__),"."))
 class Config(object):
   ### APP-SETTINGS ###
   PUBLIC_IP = "192.168.0.66"      # Public ip of the server
-  VPN_PORT_RANGE = (9000,9100)    # Portrange for vpn containers
+  VPN_PORT_RANGE = (9000,9005)    # Portrange for vpn containers
   # MySQL Connection String
   SQLALCHEMY_DATABASE_URI = "mysql+pymysql://vitsl:vitsl@localhost:3306/vitsl"
   SECRET_KEY = "pretty-secret-secret-key"
@@ -19,11 +19,9 @@ class Config(object):
   # Creates the tutorial network for a user on registration
   CREATE_TUTORIAL_NETWORK_ON_REGISTRATION = True
 
-
-
   ### OTHER SETTINGS - CAN BE IGNORED ###
   SQLALCHEMY_TRACK_MODIFICATIONS = False
-  DEBUG = False
+  DEBUG = True
   TESTING = False
 
 

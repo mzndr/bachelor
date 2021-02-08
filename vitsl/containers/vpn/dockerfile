@@ -14,11 +14,9 @@ RUN chmod a+x -R .
 COPY ./firewall/before.rules /etc/ufw/
 COPY ./firewall/ufw /etc/default/
 
+COPY ./scripts/entrypoint.sh ./
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV OPENVPN=/etc/openvpn
 
-CMD \
-ufw enable && \ 
-ufw allow 1194/tcp && \
-/etc/init.d/openvpn start && \
-tail -f /dev/null
+CMD ./entrypoint.sh
