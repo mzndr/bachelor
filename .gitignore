@@ -1,7 +1,10 @@
+config.py
+OpenVAS server (port 80/443). Login: admin Password: admin"
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
 
 # C extensions
 *.so
