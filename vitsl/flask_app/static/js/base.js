@@ -124,16 +124,15 @@ function submitFlag(){
   Api.redeemFlag(flag,(response)=>{
     console.log(response)
     let status = response.status
-    let message = response.responseJSON.status
     switch (status) {
       case 404:
-        Messaging.createMessage(message,"error")
+        Messaging.createMessage("Invalid flag!","error")
         break;
       case 410:
-        Messaging.createMessage(message,"warning")
+        Messaging.createMessage("Flag was already redeemed!","warning")
           break;
       case 1337:
-        Messaging.createMessage(message,"success")
+        Messaging.createMessage("Flag successfully redeemed!","success")
         break;
     }
 

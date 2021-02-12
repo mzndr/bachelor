@@ -1,5 +1,5 @@
 {
-  "description":"Main vpn container for granting access to the network",
-  "show_info":false,
+  "description":"VPN Container. Do NOT attack or influence its connection. If the VPN container loses network connection, the network will have to be restarted.",
+  "show_info":true,
   "hostname":"vpn_container"
 }

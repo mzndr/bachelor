@@ -48,6 +48,9 @@ select{
 code {
   color: crimson;
   background-color: #343a40;
+  overflow:hidden; 
+  white-space: nowrap; 
+  text-overflow: ellipsis;
 }
 
 .copy-span{
@@ -56,6 +59,9 @@ code {
   margin: 4px;
   padding-bottom: 7px;
   border-radius: 5px;
+  overflow:hidden; 
+  white-space: nowrap; 
+  text-overflow: ellipsis;
 }
 
 

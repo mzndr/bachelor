@@ -16,7 +16,9 @@ class Config(object):
   HINT_TIMEOUT = 15               # Minutes the user has to wait for a new hint
   RESET_PASSWORD_LENGTH = 8       # Length of generated password for passwords
 
-  VALID_USERNAME_REGEX = r'[a-zA-Z0-9_.-]*'
+  VALID_USERNAME_REGEX = r'[a-zA-Z0-9_.-]*' 
+
+  #VALID_USERNAME_REGEX = r'[0-9]*' # Matrikelnummer regex
 
   # Creates the tutorial network for a user on registration
   CREATE_TUTORIAL_NETWORK_ON_REGISTRATION = True

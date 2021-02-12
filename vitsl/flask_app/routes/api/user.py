@@ -29,6 +29,19 @@ def get_current_user_cfg():
     as_attachment=True
   )
 
+@user_api_bp.route('/current/creds', methods=['GET'])
+@login_required
+def get_current_user_creds():
+  username, password = current_user.get_vpn_credentials()
+  file = f"{username}\n{password}"
+  filename = f"{current_user.username}.creds"
+  file_bytes = io.BytesIO(bytes(file,'ascii'))
+  return send_file(
+    file_bytes,
+    attachment_filename=filename,
+    as_attachment=True
+  )
+
 @user_api_bp.route('/register', methods=['POST'])
 def register_user():
   try:

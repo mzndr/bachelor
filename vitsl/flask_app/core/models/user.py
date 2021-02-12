@@ -1,4 +1,6 @@
+import hashlib
 import random
+import re
 import string
 import uuid
 
@@ -49,6 +51,11 @@ class User(BaseModel, UserMixin):
       return 100
     percentage = (completed / total) * 100
     return percentage
+
+  def get_vpn_credentials(self):
+    username = self.username
+    password = hashlib.sha224(self.password.encode()).hexdigest()
+    return username, password
 
   def get_assigned_networks(self):
     networks = self.assigned_networks.all().copy()
@@ -123,7 +130,7 @@ class User(BaseModel, UserMixin):
 
     if User.username_exists(username):
       raise user_errors.UsernameAlreadyTakenException(name=username)
-    if not utils.is_valid_docker_name(username):
+    if not User.is_valid_username(username):
       raise user_errors.InvalidUsernameException(name=username)
     if User.email_exists(email):
       raise user_errors.EmailAlreadyTakenException(email=email)
@@ -149,7 +156,6 @@ class User(BaseModel, UserMixin):
       except Exception as err:
         current_app.logger.error(str(err))
         flash(f"Tutorial Network could not be created: {str(err)}","error")
-
     return user
 
   @staticmethod
@@ -185,6 +191,16 @@ class User(BaseModel, UserMixin):
       return False
     return True
   
+  @staticmethod
+  def is_valid_username(name):
+    if name == "":
+      return False
+
+    regex = current_app.config["VALID_USERNAME_REGEX"]
+    if re.fullmatch(regex,name) is not None:
+      return True
+    return False
+
   @staticmethod 
   def email_exists(email):
     try:

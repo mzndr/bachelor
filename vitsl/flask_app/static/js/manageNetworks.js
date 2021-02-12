@@ -251,6 +251,11 @@ class NetworkRendering{
         status = "<div class='spinner-border spinner-border-sm mr-2 mb-1'></div>" + status
         tooltip = "Network is getting deleted..."
         break;
+      case "restarting":
+        color = "bg-info"
+        status = "<div class='spinner-border spinner-border-sm mr-2 mb-1'></div>" + status
+        tooltip = "Network is getting deleted..."
+        break;
       case "error":
         color = "bg-danger"
         tooltip = "Something went wrong while starting the network :("

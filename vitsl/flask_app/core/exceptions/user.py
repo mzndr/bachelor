@@ -1,3 +1,4 @@
+from flask import current_app
 from flask_app.core.exceptions.generic import Error
 
 
@@ -18,7 +19,7 @@ class UsernameAlreadyTakenException(RegistrationException):
 class InvalidUsernameException(RegistrationException):
   def __init__(self,name,message=None):
     if message==None:
-      message= f"Username '{name}' is invalid. It must match [a-zA-Z0-9_.-]*"
+      message= f"Username '{name}' is invalid. It must match {str(current_app.config['VALID_USERNAME_REGEX'])}"
 
     self.message = message
     super().__init__(self.message)

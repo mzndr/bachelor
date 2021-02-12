@@ -309,17 +309,6 @@ class Container(BaseModel):
     usrs = utils.remove_duplicates_from_list(users)
     
 
-    # Copy user authentication files into vpn
-    for user in usrs:
-      crt_location = os.path.join(vpn_files, f"pki/issued/{user.username}.crt")
-      key_location = os.path.join(vpn_files, f"pki/private/{user.username}.key")
-
-      with open(crt_location,"w") as crt_file:
-        crt_file.write(user.vpn_crt)
-      with open(key_location,"w") as key_file:  
-        key_file.write(user.vpn_key)
-
-
     gateway_ip = network.gateway
     gateway_mac = network.get_gateway_mac()
     current_app.logger.info(f"arp -s {gateway_ip} {gateway_mac}")
@@ -335,6 +324,13 @@ class Container(BaseModel):
       cap_add="NET_ADMIN",
       caching=True
       )
+
+    # Create users for authentification
+    for user in usrs:
+      username, password = user.get_vpn_credentials()
+      command = f"useradd -g 'openvpn' -Ms /bin/bash {username} && echo '{username}:{password}' | chpasswd"
+      vpn_container.exec_command(command)
+      
 
     return vpn_container
 
@@ -801,7 +797,7 @@ class Network(BaseModel):
     elif self.status == NETWORK_STATUS_ERROR:
       return "There was an error starting the network..."
 
-    command = f"sudo openvpn --config ~/{user.username}.ovpn --remote {ip} {port} tcp"
+    command = f"sudo openvpn --config ~/{user.username}.ovpn --auth-user-pass ~/{user.username}.creds --remote {ip} {port} tcp"
     return command
 
   def get_clean_name(self):

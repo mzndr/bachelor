@@ -82,11 +82,14 @@
 {% call macros.create_modal("download_cfg", title="ReadMe.txt") %}
   <div class="modal-body">
     <p>
-      Download the config file and place it in the root of your home directory:
-      <code>mv ~/Downloads/{{current_user.username}}.ovpn ~</code>
+      Download the config file and credentials, then place them in the root of your home directory:
+      <code>mv ~/Downloads/{{current_user.username}}.* ~</code>
     </p>
   </div>
   <div class="modal-footer">
+    <button onclick="location.href=`{{url_for('user_api.get_current_user_creds')}}`" class="btn btn-primary">
+    <i class="fas fa-key mr-2"></i>Download Credentials
+    </button>
     <button onclick="location.href=`{{url_for('user_api.get_current_user_cfg')}}`" class="btn btn-primary">
     <i class="fas fa-file-download mr-2"></i>Download Config
     </button>

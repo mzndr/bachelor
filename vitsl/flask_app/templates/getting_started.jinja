@@ -11,8 +11,9 @@
             {% endcall %}
 
             {% call macros.create_card(title="2. Download your OVPN config") %}
-            <p>You need to <a href="{{url_for('user_api.get_current_user_cfg')}}">download your vpn config</a> and place it in the root of your home directory.</p>
-            <code>mv ~/Downloads/{{current_user.username}}.ovpn ~</code>
+            <p>You need to download your  <a href="{{url_for('user_api.get_current_user_cfg')}}">vpn config</a> and 
+            <a href="{{url_for('user_api.get_current_user_cfg')}}">credentials</a> and place them in the root of your home directory.</p>
+            <code>mv ~/Downloads/{{current_user.username}}.* ~</code>
             {% endcall %}
 
             {% call macros.create_card(title="3. Connect to a network") %}
@@ -21,7 +22,7 @@
               your assigned networks on your <a href="{{url_for('index.index')}}">dashboard</a>.
               The connection command looks like the following (the following command is just an example):
             </p>
-            <code>sudo openvpn --config ~/{{current_user.username}}.ovpn --remote 123.123.123 12345 udp</code>
+            <code>sudo openvpn --config ~/{{current_user.username}}.ovpn --auth-user-pass ~/{{current_user.username}}.creds --remote 123.123.123 12345 tcp</code>
             {% endcall %}
 
             

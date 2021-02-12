@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -yqq \
     net-tools \
     iptables \
     openvpn 
+RUN cp -r /etc/pam.d/other /etc/pam.d/openvpn
+
+RUN groupadd openvpn 
 
 WORKDIR /etc/openvpn
 COPY ./data .
