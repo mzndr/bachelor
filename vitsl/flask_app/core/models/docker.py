@@ -453,9 +453,12 @@ class ContainerImage(BaseModel):
       _root, _dirs, _files = list(_generator)[0]
       if "dockerfile" in _files and d not in hidden_images:
           path = os.path.join(_root,"properties.json")
-          with open(path) as json_file:
-            data = json.load(json_file)
-            ret[d] = data
+          try:
+            with open(path) as json_file:
+              data = json.load(json_file)
+              ret[d] = data
+          except Exception as err :
+            current_app.logger.error("Couln't load json of " + d + "; Error: " + str(err))
 
     return ret
   

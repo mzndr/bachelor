@@ -25,6 +25,12 @@
             <code>sudo openvpn --config ~/{{current_user.username}}.ovpn --auth-user-pass ~/{{current_user.username}}.creds --remote 123.123.123 12345 tcp</code>
             {% endcall %}
 
+            <h4>Flags</h4>
+            {% call macros.create_card(title="What are flags?") %}
+              <p>Flags are Codes which can be redeemed to verify the completion of a task</p>
+              
+            {% endcall %}
+
             
         </div>
       </div>
