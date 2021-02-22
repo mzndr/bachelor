@@ -56,6 +56,20 @@ class Api{
     })
   }
 
+  static getFlags(id,callback){
+    let api_route = Flask.url_for("docker_api.get_flags",{"id":id})
+    $.get(api_route,(data)=>{
+      callback(data)
+    })
+  }
+
+  static getUser(id,callback){
+    let api_route = Flask.url_for("user_api.get_user",{"id":id})
+    $.get(api_route,(data)=>{
+      callback(data)
+    })
+  }
+
   static deleteNetwork(id,callback){
     let api_route = Flask.url_for("docker_api.delete_network",{"id":id})
     return $.ajax({

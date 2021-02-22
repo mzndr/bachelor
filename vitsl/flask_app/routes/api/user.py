@@ -143,6 +143,16 @@ def get_all_users():
     ret.append(user.get_json())
   return jsonify(ret)
 
+@user_api_bp.route('/<int:id>', methods=['GET'])
+@login_required
+def get_user(id):
+  ret = []
+  user = User.get_user_by_id(id)
+  if not current_user.has_role('admin') or current_user != user:
+    return {"error":"you dont have permission to access this data."},403
+  
+  return jsonify(user.get_json())
+
 
 ### Groups ### 
 @user_api_bp.route('/groups/', methods=['GET'])

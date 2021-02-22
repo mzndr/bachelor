@@ -117,6 +117,12 @@ function copyToClipborad(text,element){
   Messaging.createTemporalMessage("Text copied to clipboard!","success")
 }
 
+function adjustUserCompletion(){
+  Api.getUser(userId,(response)=>{
+    $("#user_progrss").css("width",`${response.network_completion}%`)
+    $("#user_completion").text(`${response.network_completion}% of all flags redeemed!`)
+  })
+}
 
 function submitFlag(){
   let flag = $("#submit_flag_text").val()
@@ -133,8 +139,8 @@ function submitFlag(){
           break;
       case 1337:
         Messaging.createMessage("Flag successfully redeemed!","success")
+        adjustUserCompletion()
         break;
     }
-
   })
 }

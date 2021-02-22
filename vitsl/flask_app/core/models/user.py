@@ -100,6 +100,7 @@ class User(BaseModel, UserMixin):
       "username":self.username,
       "email":self.email,
       "roles": [],
+      "network_completion": round(self.get_total_completion_percentage(),1) 
     }
     for role in self.roles:
       json["roles"].append(role.get_json())

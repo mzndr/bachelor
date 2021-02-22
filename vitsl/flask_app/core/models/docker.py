@@ -91,8 +91,6 @@ class Container(BaseModel):
       current_app.logger.warning("Couldn't read properties of at " + path )
       return "error"
 
-
-
   def stop(self):
     try:
 
@@ -560,6 +558,7 @@ NETWORK_STATUS_STARTING = "starting"
 NETWORK_STATUS_RESTARTING = "restarting"
 NETWORK_STATUS_DELETING = "deleting"
 NETWORK_STATUS_ERROR = "error"
+
 class Network(BaseModel):
   """Model for a running network"""
 
@@ -648,11 +647,14 @@ class Network(BaseModel):
       "assigned_users": [],
       "containers": [],
       "flags":[],
+      "total_flags":len(self.get_flags()),
+      "redeemed_flags":len(self.get_redeemed_flags()),
       "next_hint":self.get_next_hint_time(),
       "hosts_file": self.get_hosts_file_lines(),
       "status": self.status,
       "preset": self.preset.name,
-      "command": self.get_connection_command(current_user)
+      "command": self.get_connection_command(current_user),
+      "completion": self.get_completion_percent()
     }
 
     if self.status == NETWORK_STATUS_RUNNING:
@@ -1022,12 +1024,13 @@ class Flag(BaseModel):
 
   def get_json(self):
     json = {
+      "id":self.id,
       "name":self.name,
       "redeemed": self.redeemed,
       "last_hint": self.last_hint,
       "description": self.get_description(),
-      "next_hint": self.network.get_next_hint_time()
-      
+      "next_hint": self.network.get_next_hint_time(),
+      "revealed_hints": self.get_revealed_hints()
     }
   
     hints_left = len(self.get_hints()) - len(self.get_revealed_hints())
@@ -1041,6 +1044,7 @@ class Flag(BaseModel):
     return json
 
   def redeem(self,user):
+    self.last_hint = len(self.get_hints()) - 1
     self.redeemed = True
     self.redeemed_by = user
     db.session.add(self)
@@ -1050,13 +1054,11 @@ class Flag(BaseModel):
     db.session.delete(self)
     db.session.commit()
 
-
   def get_description(self):
     if self.container == None:
       return None
 
     return self.container.read_properties()["flags"][self.name]["description"]
-
 
   def get_hint(self):
     hints = self.get_hints()

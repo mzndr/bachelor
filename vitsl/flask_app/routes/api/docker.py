@@ -164,8 +164,22 @@ def get_all_networks():
 @login_required
 def get_hint(network_id,flag_id):
   network = Network.get_network_by_id(network_id)
+  if not network.user_allowed_to_access(current_user):
+    return {"error":"you are not assigned to this network"},403
   hint = network.get_hint(flag_id)
   return jsonify(hint)
+
+@docker_api_bp.route('/networks/<int:id>/flags', methods=['GET'])
+@login_required
+def get_flags(id):
+  network = Network.get_network_by_id(id)
+  if not network.user_allowed_to_access(current_user):
+    return {"error":"you are not assigned to this network"},403
+  flags = network.get_flags()
+  ret = []
+  for flag in flags:
+    ret.append(flag.get_json())
+  return jsonify(ret)
 
 @docker_api_bp.route('/flags/<int:flag_id>/', methods=['GET'])
 @login_required

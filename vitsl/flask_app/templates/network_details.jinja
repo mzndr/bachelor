@@ -8,9 +8,9 @@
               {% include "flag_form.jinja" %}
             </div>
             <div class="progress mt-1 elevation-1">
-              <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{network.get_completion_percent()}}%;" aria-valuenow="{{network.get_completion_percent()}}" aria-valuemin="0" aria-valuemax="100">
+              <div id="network_progress" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: {{network.get_completion_percent()}}%;" aria-valuenow="{{network.get_completion_percent()}}" aria-valuemin="0" aria-valuemax="100">
               </div>
-              <h5 class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
+              <h5 id="network_completion" class="justify-content-center d-flex position-absolute w-100 mt-1 text-dark">
                 {{ network.get_redeemed_flags().__len__() }} of {{ network.get_flags().__len__() }} flags redeemed!
               </h5>
             </div>
@@ -60,40 +60,9 @@
       <!-- /row -->
 
       <div class="row mb-5">
-          <div class="col">
+          <div class="col" id="tasks">
           <h3>Tasks</h3>
-          {% for flag in network.get_unredeemed_flags() %}
-            {% call macros.create_card(title=flag.get_description(),additional_classes="card-danger") %}
-               <table id="flag_{{flag.id}}_hints" class="table table-dark elevation-2 mb-3">
-                <thead>
-                  <tr>
-                    <th>Hints</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for hint in flag.get_revealed_hints() %}
-                  <tr>
-                    <td style="border: none;">{{ hint }}</td>
-                  </tr>
-                  {% else %}
-                  <tr class="none"><td>None.</td></tr>
-                  {% endfor %}
-                </table>
-
-              <button class="btn btn-primary" onload="buttonTimer({{flag.id}},this)" onclick="getHint({{network.id}},{{flag.id}},this)">
-                Get a Hint!
-              </button>
-            {% endcall%}
-          {% endfor %}
-          {% if network.get_flags().__len__() != 0%}
-            {% for flag in network.get_redeemed_flags() %}
-              {% call macros.create_card(title=flag.get_description(),additional_classes="card-success") %}
-                {% if current_user.has_role("admin") %}
-                  Redeemed by: {{ flag.redeemed_by.username }}
-                {% endif%}
-              {% endcall%}
-            {% endfor %}     
-          {% else %}
+          {% if network.get_flags().__len__() == 0%}   
             {% call macros.create_card(title=":(",additional_classes="card-warning") %}
                 There are no tasks for this network.
             {% endcall%}
@@ -111,5 +80,8 @@
 
 {% block javascripts%}
 {{super()}}
+<script>
+  var networkId = "{{network.id}}"
+</script>
 <script src="{{url_for('static', filename='js/networkDetails.js')}}"></script>
 {% endblock %}
