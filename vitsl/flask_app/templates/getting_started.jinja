@@ -27,7 +27,14 @@
 
             <h4>Flags</h4>
             {% call macros.create_card(title="What are flags?") %}
-              <p>Flags are Codes which can be redeemed to verify the completion of a task</p>
+              <p>Flags are codes which can be redeemed to verify the completion of a task.</p>
+              <p>A flag looks like the following: FLAG{a2d45b8586f945058496532b8cc3dad9}</p>
+              <p>You can either redeem the code in the curly brackets or submit the flag as a whole. Both works!</p>
+              <p>Flags are setup so that they can appear literally everywhere. Always watch out for them!</p>
+              <p>If you're stuck with a flag, you can request a hint. Hints for a network can be requested every {{config["HINT_TIMEOUT"]}} minutes.
+              For example, you can request more than one hint at the same time in two different networks. But only one every {{config["HINT_TIMEOUT"]}}
+              minutes inside the same network.
+              </p>
               
             {% endcall %}
 
